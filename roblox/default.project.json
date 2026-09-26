@@ -1,0 +1,17 @@
+{
+  "name": "WildWest",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "WildWestShared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "WildWest": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "WildWestClient": { "$path": "src/client" }
+      }
+    }
+  }
+}
