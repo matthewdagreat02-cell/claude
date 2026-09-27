@@ -96,9 +96,45 @@ RunService.Heartbeat:Connect(function()
 		m.MotorMaxTorque = tq
 	end
 
+	-- Wheel angle: full lock at low speed, still 70% at top speed.
 	local speedFactor = math.clamp(math.abs(forwardSpeed) / top, 0, 1)
-	local angle = -steer * maxSteer * (1 - 0.55 * speedFactor)
+	local angle = -steer * maxSteer * (1 - 0.3 * speedFactor)
 	for _, s in r.steers do
-		s.TargetAngle = angle
+		-- Ackermann: the inside wheel turns more than the outside wheel
+		local side = s:GetAttribute("Side") or 0
+		local inside = (angle < 0 and side > 0) or (angle > 0 and side < 0)
+		s.TargetAngle = angle * (inside and 1.12 or 0.9)
+	end
+
+	-- Turn assist + grip, only while the wheels are on the ground.
+	local assist = model:GetAttribute("TurnAssist") or 1
+	if assist > 0 then
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { model, char }
+		local grounded = workspace:Raycast(chassis.Position, -chassis.CFrame.UpVector * (radius * 2 + 2.5), params) ~= nil
+		if grounded then
+			local turnRate = model:GetAttribute("TurnRate") or 2
+			local vel = chassis.AssemblyLinearVelocity
+			local ang = chassis.AssemblyAngularVelocity
+			local up = chassis.CFrame.UpVector
+			-- Turning right = negative spin around the vehicle's up axis.
+			-- Needs a little speed so it doesn't spin on the spot; flips in reverse.
+			local moving = math.clamp(math.abs(forwardSpeed) / 10, 0, 1)
+			local direction = forwardSpeed >= 0 and 1 or -1
+			local targetYaw = -steer * turnRate * moving * direction
+			local currentYaw = ang:Dot(up)
+			local newYaw = currentYaw + (targetYaw - currentYaw) * 0.35 * assist
+			if steer == 0 then
+				newYaw = currentYaw * (1 - 0.15 * assist) -- straighten out, no drifting spin
+			end
+			chassis.AssemblyAngularVelocity = ang + up * (newYaw - currentYaw)
+
+			-- Remove some sideways sliding so turns bite instead of skidding.
+			local grip = model:GetAttribute("SideGrip") or 0.18
+			local right = chassis.CFrame.RightVector
+			local side = vel:Dot(right)
+			chassis.AssemblyLinearVelocity = vel - right * side * grip
+		end
 	end
 end)

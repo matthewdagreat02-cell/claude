@@ -70,6 +70,7 @@ Config.Vehicles = {
 		Style = "Pickup",
 		TopSpeed = Config.StarterBaseSpeed * Config.StarterSpeedMultiplier, -- 75
 		Acceleration = 45,
+		TurnRate = 2.1, -- how fast it turns (radians/second); higher = tighter
 		Color = Color3.fromRGB(200, 60, 50),
 	},
 	{
@@ -80,6 +81,7 @@ Config.Vehicles = {
 		Style = "ShortBus",
 		TopSpeed = 100, -- 2nd fastest
 		Acceleration = 50,
+		TurnRate = 1.7,
 		Color = Color3.fromRGB(255, 196, 30),
 	},
 	{
@@ -90,12 +92,17 @@ Config.Vehicles = {
 		Style = "Kei",
 		TopSpeed = 125, -- fastest in the game
 		Acceleration = 70,
+		TurnRate = 2.5,
 		Color = Color3.fromRGB(245, 245, 240),
 	},
 }
 -- Flip this if vehicles drive backwards when you press W.
 Config.InvertDrive = false
-Config.MaxSteerDegrees = 32
+-- Steering. Wheels turn up to MaxSteerDegrees, and Turn Assist rotates the
+-- vehicle directly so it turns tightly at any speed (arcade handling).
+Config.MaxSteerDegrees = 45
+Config.TurnAssist = 1 -- 0 = off (pure wheel physics), 1 = full
+Config.SideGrip = 0.18 -- 0..1, how much sideways sliding is removed each frame
 
 ---------------------------------------------------------------------------
 -- TORNADO VEHICLE THROW

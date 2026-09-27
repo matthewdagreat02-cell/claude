@@ -290,11 +290,12 @@ function VehicleBuilder.build(def, pivotCF)
 				steer.Name = "Steer"
 				steer.ActuatorType = Enum.ActuatorType.Servo
 				steer.ServoMaxTorque = 1e7
-				steer.AngularSpeed = 5
+				steer.AngularSpeed = 12
 				steer.TargetAngle = 0
 				steer.Attachment0 = sA0
 				steer.Attachment1 = sA1
 				steer.Parent = knuckle
+				steer:SetAttribute("Side", xSide) -- -1 left, 1 right (for Ackermann steering)
 				table.insert(steers, steer)
 
 				local kA = Instance.new("Attachment")
@@ -329,6 +330,9 @@ function VehicleBuilder.build(def, pivotCF)
 	m:SetAttribute("WheelRadius", R)
 	m:SetAttribute("MotorTorque", torque)
 	m:SetAttribute("MaxSteer", Config.MaxSteerDegrees)
+	m:SetAttribute("TurnRate", def.TurnRate or 2)
+	m:SetAttribute("TurnAssist", Config.TurnAssist)
+	m:SetAttribute("SideGrip", Config.SideGrip)
 	m:SetAttribute("InvertDrive", Config.InvertDrive)
 	m:SetAttribute("InTornado", false)
 	return m, motors, steers
