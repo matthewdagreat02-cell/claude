@@ -1,0 +1,1366 @@
+<title>Lesson 104 Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one 780px column. Sticky tab bar. Question card = equipment nameplate + meter (LCD) readouts, like the book's figures. */
+:root{
+  --bg:#eceff2; --surface:#ffffff; --surface-2:#f5f7f9; --ink:#17212c; --muted:#5a6775; --line:#d3dae1;
+  --accent:#1f56c9; --accent-ink:#ffffff; --accent-soft:#e3ebfb; --tape:#d9aa12;
+  --ok:#1d7f46; --ok-bg:#e2f3e8; --bad:#bf3328; --bad-bg:#fbe6e3; --warn:#8a5d00; --warn-bg:#fbf1d6;
+  --plate-a:#e6e9ed; --plate-b:#c8cfd6; --plate-ink:#25303a; --rivet:#97a2ad;
+  --lcd-bg:#c9d6b4; --lcd-ink:#1e2a14; --lcd-shadow:rgba(0,0,0,.18);
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --font-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f151c; --surface:#17202a; --surface-2:#1c2632; --ink:#e4eaf0; --muted:#9aa7b4; --line:#2b3746;
+    --accent:#7ea5ff; --accent-ink:#0c1424; --accent-soft:#1d2a45; --tape:#e8bd3a;
+    --ok:#5ccb8e; --ok-bg:#133024; --bad:#ff8377; --bad-bg:#3b1915; --warn:#e8bd3a; --warn-bg:#3a2e10;
+    --plate-a:#323b45; --plate-b:#232b34; --plate-ink:#e2e8ee; --rivet:#5f6a76;
+    --lcd-bg:#1d2a17; --lcd-ink:#c4e3a3; --lcd-shadow:rgba(0,0,0,.55);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f151c; --surface:#17202a; --surface-2:#1c2632; --ink:#e4eaf0; --muted:#9aa7b4; --line:#2b3746;
+  --accent:#7ea5ff; --accent-ink:#0c1424; --accent-soft:#1d2a45; --tape:#e8bd3a;
+  --ok:#5ccb8e; --ok-bg:#133024; --bad:#ff8377; --bad-bg:#3b1915; --warn:#e8bd3a; --warn-bg:#3a2e10;
+  --plate-a:#323b45; --plate-b:#232b34; --plate-ink:#e2e8ee; --rivet:#5f6a76;
+  --lcd-bg:#1d2a17; --lcd-ink:#c4e3a3; --lcd-shadow:rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding-inline:16px;padding-block:22px 80px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(36px,8vw,52px);line-height:.95;letter-spacing:.005em;margin:8px 0 10px;text-wrap:balance}
+.sub{margin:0;color:var(--muted);max-width:62ch}
+.rule{width:132px;height:7px;margin-top:16px;border-top:3px solid var(--tape);border-bottom:1.5px solid var(--accent)}
+
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;margin-top:18px;padding-block:8px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{flex:none;font:700 15px/1 var(--font-body);padding:11px 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);border-color:var(--line);box-shadow:inset 0 -3px 0 var(--accent)}
+.tab:focus-visible,.chip:focus-visible,.choice:focus-visible,.btn:focus-visible,.linkbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.lede{margin:18px 0 12px;max-width:64ch}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.chip{display:grid;gap:2px;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer}
+.chip b{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--accent)}
+.chip .nm{font-size:14px;line-height:1.25}
+.chip small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="false"]{background:transparent;border-style:dashed;color:var(--muted)}
+.chip[aria-pressed="false"] b{color:var(--muted)}
+.meter{display:block;height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:5px}
+.meter i{display:block;height:100%;background:var(--accent)}
+
+.statbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin-top:14px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.statbar b{font-family:var(--font-mono);font-size:16px;color:var(--ink);font-weight:600}
+.linkbtn{font:inherit;font-size:14px;background:none;border:0;padding:4px 2px;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.statbar .linkbtn{margin-left:auto}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:12px}
+.qhead{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--muted)}
+.obj{font-family:var(--font-mono);font-weight:600;font-size:12px;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.qno{margin-left:auto;font-family:var(--font-mono)}
+.stem{font-size:19px;line-height:1.45;margin:12px 0 14px;text-wrap:pretty}
+.roman{display:block;margin-top:8px;font-size:17px;line-height:1.7;padding-left:14px}
+.fig{display:inline-block;padding:10px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);margin:0 0 6px;color:var(--ink)}
+.fig svg{display:block;width:180px;height:72px}
+
+.plate{margin:4px 0 10px;padding:14px 24px;border-radius:6px;border:1px solid var(--line);color:var(--plate-ink);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em;
+  background:
+    radial-gradient(circle at 10px 10px,var(--rivet) 2.6px,transparent 3.3px),
+    radial-gradient(circle at calc(100% - 10px) 10px,var(--rivet) 2.6px,transparent 3.3px),
+    radial-gradient(circle at 10px calc(100% - 10px),var(--rivet) 2.6px,transparent 3.3px),
+    radial-gradient(circle at calc(100% - 10px) calc(100% - 10px),var(--rivet) 2.6px,transparent 3.3px),
+    linear-gradient(180deg,var(--plate-a),var(--plate-b));}
+.plate-label{font-size:11px;opacity:.75}
+.plate-name{font-weight:600;font-size:14px;margin-top:2px}
+.plate-rate{display:flex;flex-wrap:wrap;gap:4px 24px;font-size:24px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:.02em}
+.readings{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.lcd{display:inline-flex;align-items:baseline;gap:9px;background:var(--lcd-bg);color:var(--lcd-ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-family:var(--font-mono);box-shadow:inset 0 1px 4px var(--lcd-shadow)}
+.lcd-k{font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.lcd-v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+
+.choices{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:8px}
+.choice{width:100%;display:flex;gap:12px;align-items:center;text-align:left;font:inherit;font-size:16px;color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;min-height:50px;cursor:pointer}
+.choice:hover:not(:disabled){border-color:var(--accent)}
+.choice:disabled{cursor:default}
+.choice:disabled:not(.is-right):not(.is-wrong){opacity:.55}
+.let{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-mono);font-weight:600;font-size:14px;border:1.5px solid var(--muted);color:var(--muted)}
+.ctext{min-width:0;font-variant-numeric:tabular-nums}
+.ctext svg{display:block;width:150px;height:60px;color:var(--ink)}
+.choice.is-right{border-color:var(--ok);background:var(--ok-bg)}
+.choice.is-right .let{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.choice.is-wrong{border-color:var(--bad);background:var(--bad-bg)}
+.choice.is-wrong .let{background:var(--bad);border-color:var(--bad);color:var(--surface)}
+
+.feedback{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+.verdict{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.1;margin:0}
+.verdict.ok{color:var(--ok)} .verdict.bad{color:var(--bad)}
+.why{background:var(--bad-bg);border-radius:8px;padding:10px 12px;margin:10px 0 0}
+.label{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px;font-weight:500}
+.steps{margin:0;padding-left:22px;display:grid;gap:7px}
+.steps li{padding-left:2px}
+code{font-family:var(--font-mono);font-size:.9em;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;overflow-wrap:anywhere}
+.cite{font-size:14px;color:var(--muted);margin:14px 0 0}
+.cite b{color:var(--ink);font-weight:700}
+.btn{font:700 16px/1 var(--font-body);background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:15px 22px;cursor:pointer;margin-top:18px;min-width:200px}
+.kbd{font-size:13px;color:var(--muted);margin:10px 2px 0}
+
+/* Study guide */
+.guide h2{font-family:var(--font-display);font-weight:700;font-size:30px;line-height:1.05;margin:40px 0 4px;text-wrap:balance;scroll-margin-top:72px}
+.guide h2 .code{display:block;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.06em;margin-bottom:4px}
+.guide h3{font-size:17px;margin:22px 0 6px}
+.guide ul{margin:0;padding-left:20px;display:grid;gap:7px;max-width:68ch}
+.guide p{max-width:68ch}
+.pg{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap;margin-left:4px}
+.pend{font-family:var(--font-mono);font-size:11px;background:var(--warn-bg);color:var(--warn);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:15px;max-width:68ch}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.toc a{font-family:var(--font-mono);font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px;background:var(--surface)}
+.scroll{overflow-x:auto;margin:8px 0 0}
+table{border-collapse:collapse;font-size:15px;min-width:100%}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+td code{white-space:nowrap}
+.wheel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+.wcell{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:6px;align-content:start}
+.wcell h4{margin:0;font-family:var(--font-display);font-size:24px;line-height:1}
+.wcell h4 small{display:block;font-family:var(--font-body);font-size:12px;font-weight:400;color:var(--muted);margin-top:3px}
+.wcell code{font-size:14px;justify-self:start}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.box h4{margin:0 0 6px;font-size:15px}
+.box p{margin:0;font-size:15px}
+.method{margin:6px 0 0;padding-left:24px;display:grid;gap:6px;max-width:68ch}
+.trap{background:var(--warn-bg);border-radius:10px;padding:12px 14px;margin-top:10px;max-width:68ch}
+.trap b:first-child{color:var(--warn)}
+
+/* Homework */
+.hw-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:16px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tile b{display:block;font-family:var(--font-display);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.tile span{font-size:13px;color:var(--muted)}
+.tile.ok b{color:var(--ok)} .tile.bad b{color:var(--bad)} .tile.blank b{color:var(--warn)}
+.ws{margin-top:28px}
+.ws h3{font-family:var(--font-display);font-size:24px;margin:0;line-height:1.1}
+.ws .wsp{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin:2px 0 8px}
+.hw-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:4px 10px;padding:11px 0;border-bottom:1px solid var(--line);align-items:start}
+.hw-n{font-family:var(--font-mono);font-weight:600;color:var(--muted);padding-top:1px}
+.hw-q{margin:0}
+.hw-meta{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:14px;margin-top:4px}
+.hw-meta span{color:var(--muted)}
+.hw-meta b{color:var(--ink)}
+.hw-cite{font-size:14px;color:var(--muted);margin-top:4px}
+.hw-cite b{color:var(--ink)}
+.pill{font-family:var(--font-mono);font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.blank{background:var(--warn-bg);color:var(--warn)}
+.fixlist{margin:10px 0 0;padding-left:20px;display:grid;gap:6px;max-width:68ch}
+
+@media (max-width:560px){
+  .wheel{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .two{grid-template-columns:1fr}
+  .stem{font-size:18px}
+  .card{padding:16px 14px}
+  .plate{padding:14px 20px}
+  .plate-rate{font-size:21px}
+  .btn{width:100%}
+}
+@media (prefers-reduced-motion:no-preference){
+  .card{animation:rise .18s ease-out}
+  @keyframes rise{from{transform:translateY(4px)}to{transform:none}}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">IEC First Year · 2026–2027 · Lesson 104</p>
+    <h1>Lesson 104 Trainer</h1>
+    <p class="sub">Introduction to Electrical Theory and Ohm’s Law. Practice questions that never run out, a study guide tied to your book’s pages, and a check of your worksheets.</p>
+    <div class="rule" aria-hidden="true"></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-practice" aria-controls="practice" aria-selected="true" type="button">Practice</button>
+    <button class="tab" role="tab" id="tab-guide" aria-controls="guide" aria-selected="false" type="button">Study guide</button>
+    <button class="tab" role="tab" id="tab-homework" aria-controls="homework" aria-selected="false" type="button">Homework check</button>
+  </nav>
+
+  <section id="practice" role="tabpanel" aria-labelledby="tab-practice">
+    <p class="lede">Each question is built fresh, with new nameplates, new numbers and shuffled choices. Pick the objectives to drill. The trainer gives you more of the ones you miss.</p>
+    <div class="chips" id="chips"></div>
+    <div class="statbar" id="stats"></div>
+    <article class="card" id="card" aria-live="polite"></article>
+    <p class="kbd">Keyboard: 1–5 or a–e to answer, Enter for the next question.</p>
+  </section>
+
+  <section id="guide" class="guide" role="tabpanel" aria-labelledby="tab-guide" hidden>
+    <p class="lede">Everything the Lesson 104 quiz can ask, by objective. The gray numbers are page numbers in your 2026–2027 book.</p>
+    <p class="note">Built from pages 104-1 to 104-8 and 104-13 to 104-21, plus your worksheets. Pages 104-9 to 104-12 (the start of 104.2: resistance and power) haven’t been sent yet. Anything that depends on them is marked <span class="pend">page not sent</span>.</p>
+    <nav class="toc" aria-label="Jump to">
+      <a href="#g-1041">104.1 Electron theory</a><a href="#g-1042">104.2 Circuits</a><a href="#g-1043">104.3 Ohm’s Law</a><a href="#g-1044">104.4 Applied voltage</a><a href="#g-safety">Safety</a><a href="#g-traps">Traps</a>
+    </nav>
+
+    <h2 id="g-1041"><span class="code">OBJECTIVE 104.1</span>Understand basic electron theory</h2>
+    <h3>Atoms and charges</h3>
+    <ul>
+      <li>All matter is composed of <b>molecules</b>. Molecules are made of different <b>atoms</b>. <span class="pg">104-2</span></li>
+      <li>Each atom has a <b>nucleus</b> (protons and neutrons) with electrons orbiting it. <span class="pg">104-2</span></li>
+      <li>Electron = <b>negative (−)</b>. Proton = <b>positive (+)</b>. Neutron = <b>no charge</b>. An atom usually has equal numbers of electrons and protons. <span class="pg">104-2</span></li>
+      <li><b>Bound electrons</b> are held in orbit by the protons’ equal attraction. <b>Free electrons</b> are in the outermost orbit and are held loosely. <span class="pg">104-2</span></li>
+      <li>An external force knocks free electrons out of orbit: <b>chemical action, friction, or a magnetic field</b>. The empty spot left behind is a <b>hole</b>. <span class="pg">104-2</span></li>
+      <li><b>Magnetism is the basis of electricity.</b> Opposite charges attract. Like charges repel. <span class="pg">104-3</span></li>
+      <li>Hard steel makes a good permanent magnet (hard to magnetize and demagnetize). Soft iron is easily magnetized and demagnetized. <span class="pg">104-3 note</span></li>
+    </ul>
+    <h3>Current</h3>
+    <ul>
+      <li><b>Current is the flow of electrons from one atom to another.</b> It makes all electrical equipment operate. <span class="pg">104-3</span></li>
+      <li>Letter <b>I</b> (for intensity). Unit <b>amperes (A)</b>. Measured with an <b>ammeter</b>. <span class="pg">104-3</span></li>
+      <li>1 amp = 6.24 × 10¹⁸ electrons passing a point in one second. <span class="pg">104-3</span></li>
+      <li>Electrons leave the <b>negative</b> terminal, go through the wire and the load, and come back into the <b>positive</b> terminal. They flow whenever there is a <b>difference in potential</b>. <b>Electron flow is current flow.</b> <span class="pg">104-4</span></li>
+    </ul>
+    <h3>Charge, energy and power units</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Unit</th><th>What it is</th><th>Formula</th><th>Page</th></tr></thead>
+      <tbody>
+        <tr><td>Coulomb (C)</td><td>Unit of electric charge. 1 A for 1 second ≈ 6.24 × 10¹⁸ electrons.</td><td><code>C = A × s</code> <code>A = C ÷ s</code></td><td class="pg">104-4</td></tr>
+        <tr><td>Joule (J)</td><td>When applied to electricity, a unit of <b>energy</b>. Also called coulomb-volts.</td><td><code>J = C × V</code></td><td class="pg">104-4</td></tr>
+        <tr><td>Watt (W)</td><td>One joule per second. One joule = one watt-second.</td><td><code>W = J ÷ s</code> <code>J = W × s</code></td><td class="pg">104-4</td></tr>
+        <tr><td>Kilowatt-hour (kWh)</td><td>Seen on residential electric meters.</td><td><code>1 kWh = 3,600,000 J</code></td><td class="pg">104-4, 104-5</td></tr>
+      </tbody>
+    </table></div>
+    <p>A surge protector’s <b>joule rating</b> is how much energy it can absorb before it fails. Higher number = greater protection. <span class="pg">104-5</span></p>
+    <h3>Voltage and voltage sources</h3>
+    <ul>
+      <li><b>Voltage</b> is the force that makes electrons flow (electromotive force, emf). It exists because of a difference in potential between two points. <span class="pg">104-5</span></li>
+      <li>Letter <b>E or V</b>. Unit <b>volts (V)</b>. Measured with a <b>voltmeter</b>. <span class="pg">104-5</span></li>
+      <li>Water-pipe comparison: a stronger pump means more flow, and a bigger pipe means more flow. The same is true for electrons. <span class="pg">104-5</span></li>
+      <li>A battery is electrochemical. The negative terminal has the excess electrons and the positive has the shortage. Symbol: two lines, and the <b>shorter line is negative</b>. <span class="pg">104-5, Fig. 104-7</span></li>
+      <li>A thermocouple is two dissimilar metals joined at one end, with the junction heated, giving a small voltage. Limited capability. Used in gas heating units, cooking equipment and water heaters. If the pilot goes out, the voltage stops, the solenoid valve closes and the gas shuts off. <span class="pg">104-5, 104-6</span></li>
+      <li>Most common voltage source is a <b>generator (or alternator)</b>. Its shaft is turned by wind, hydroelectric (gravity), wave motion (wind and tides) or engines. <span class="pg">104-8</span></li>
+      <li><b>DC</b> (direct current): a source with + and − terminals, like a battery or DC power supply. The voltage is constant. <b>AC</b> (alternating current): the source is a generator or transformer. <span class="pg">104-8</span></li>
+    </ul>
+    <h3>Metric prefixes (convert before you calculate)</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>Prefix</th><th>Means</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>micro (μ)</td><td>÷ 1,000,000 = .000001</td><td>1 μA = .000001 A</td></tr>
+        <tr><td>milli (m)</td><td>÷ 1,000 = .001</td><td>200 mA = .2 A</td></tr>
+        <tr><td>kilo (k)</td><td>× 1,000</td><td>2.2 kW = 2,200 W</td></tr>
+        <tr><td>mega (M)</td><td>× 1,000,000</td><td>1 MV = 1,000,000 V</td></tr>
+      </tbody>
+    </table></div>
+    <p class="pg" style="margin-left:0">104-3, 104-8, 104-17</p>
+    <h3>Conductors and insulators</h3>
+    <div class="two">
+      <div class="box"><h4>Conductors: many free electrons</h4><p>Copper, brass, silver, aluminum, platinum, gold, zinc. <b>Copper</b> is used most because it is relatively inexpensive and has other good physical characteristics. Conductors are classified by how many electrons can travel freely. <span class="pg">104-6</span></p></div>
+      <div class="box"><h4>Insulators: very, very few free electrons</h4><p>Some plastics, rubber, glass, mica, some ceramics, <b>air</b>. Lineman’s pliers combine steel jaws (conductor) with plastic handle covers (insulator). <span class="pg">104-6</span></p></div>
+    </div>
+    <ul style="margin-top:12px">
+      <li>Wet wood conducts. Plywood glue may conduct, so use insulating mats made for the purpose. <span class="pg">104-7</span></li>
+      <li>New leather boots with rubber soles insulate, but sweaty, dirty boots don’t, because sweat is salty. <span class="pg">104-7</span></li>
+      <li>Pure distilled water is a perfect insulator. Adding chlorine, salt or dirt makes it more and more conductive. Never put body parts in tap or dirty water to operate energized equipment. <span class="pg">104-7</span></li>
+      <li>Dust on insulated wires in a panel can carry current, so keep equipment enclosed and clean. Check what cleaning solution was used on rubber mats and gloves. <span class="pg">104-7</span></li>
+      <li><b>Static electricity</b> is a collection of charged particles at rest, usually on insulated surfaces. It has virtually no practical use to an electrician. <span class="pg">104-7</span></li>
+    </ul>
+
+    <h2 id="g-1042"><span class="code">OBJECTIVE 104.2</span>Recognize characteristics of electrical circuits and current flow</h2>
+    <ul>
+      <li>A circuit must be <b>complete</b>. Any break (open drawbridge, broken filament) <b>stops the flow of current</b>. <span class="pg">104-13, Fig. 104-17</span></li>
+      <li>Circuit breaker <b>ON = closed</b> = a conductor with <b>zero resistance</b>. <b>OFF = open</b> = an insulator (air space) with <b>infinite resistance</b>, so no current flows. <span class="pg">104-13</span></li>
+      <li>Closed breakers have zero resistance, so they can be left off circuit diagrams. <span class="pg">104-14 note</span></li>
+      <li>Generators and transformers are made of coils of wire called <b>windings</b>. Voltage is generated in the generator windings at the power plant. <span class="pg">104-13</span></li>
+      <li>Transformers have <b>two windings</b> in one enclosure. <b>Primary = high voltage. Secondary = low voltage.</b> They reduce a high voltage to a useable level. The <b>distribution transformer secondary</b> is our voltage source. <span class="pg">104-14</span></li>
+      <li>4,160 V down to 240 V is a common transformation. Other common low voltages are 120, 208, 277 and 480. <span class="pg">104-13, 104-14</span></li>
+      <li>Current path: transformer, main breaker, busbars, 30 A breaker, heating element, then back to the transformer winding. <span class="pg">104-14, Fig. 104-19</span></li>
+      <li>Circuits can be drawn many equal ways. Learn to redraw them in the form you like best. <span class="pg">104-14</span></li>
+    </ul>
+    <h3>Symbols</h3>
+    <div class="scroll"><table id="symtable"><thead><tr><th>Symbol</th><th>Means</th><th>Page</th></tr></thead><tbody></tbody></table></div>
+    <h3>From your worksheets (confirm on pages 104-9 to 104-12) <span class="pend">page not sent</span></h3>
+    <ul>
+      <li><b>Resistance</b> is the total opposition to current flow.</li>
+      <li><b>Smaller wire means more resistance.</b> A bigger wire is a bigger “pipe” (p. 104-5). A smaller AWG number is a bigger wire: 8 AWG is .128" and 10 AWG is .116".</li>
+      <li><b>Heat raises resistance.</b> A circuit on a hot roof has more resistance than one two feet underground.</li>
+      <li>Heating elements (coffee maker, oven, water heater) are <b>resistive loads</b>. They are drawn as resistance in Figs. 104-19 and 104-20.</li>
+      <li>Identical loads on one circuit add their currents: 2 loads = <b>double</b> the current of one.</li>
+    </ul>
+
+    <h2 id="g-1043"><span class="code">OBJECTIVE 104.3</span>Relationship between voltage, current, resistance and power</h2>
+    <ul>
+      <li>Georg Simon Ohm developed Ohm’s Law in <b>1827</b>. It shows the relationship between current (I), voltage (E) and resistance (R). <span class="pg">104-16</span></li>
+      <li>In words, <b>1 volt of pressure forces 1 ampere through 1 ohm</b>. <span class="pg">104-16</span></li>
+      <li>Current is always in <b>amperes</b>. Voltage is always in <b>volts</b>. Resistance is always in <b>ohms</b>. <span class="pg">104-16</span></li>
+      <li>Triangle: <b>cover the value you want</b>, and the remaining letters make the formula. <span class="pg">104-16, Fig. 104-21</span></li>
+      <li>The two basic formulas are <code>I = E ÷ R</code> and <code>P = I × E</code>. All the others come from these. If you know <b>any two</b> values, you can find the rest. <span class="pg">104-17</span></li>
+    </ul>
+    <h3>The Ohm’s Law wheel: all 12 formulas</h3>
+    <div class="wheel">
+      <div class="wcell"><h4>I<small>current · amperes (A)</small></h4><code>I = E ÷ R</code><code>I = P ÷ E</code><code>I = √(P ÷ R)</code></div>
+      <div class="wcell"><h4>E<small>voltage · volts (V)</small></h4><code>E = I × R</code><code>E = P ÷ I</code><code>E = √(P × R)</code></div>
+      <div class="wcell"><h4>R<small>resistance · ohms (Ω)</small></h4><code>R = E ÷ I</code><code>R = E² ÷ P</code><code>R = P ÷ I²</code></div>
+      <div class="wcell"><h4>P<small>power · watts (W)</small></h4><code>P = I × E</code><code>P = I² × R</code><code>P = E² ÷ R</code></div>
+    </div>
+    <p class="pg" style="margin-left:0">Fig. 104-25 and 104-26, p. 104-18</p>
+    <h3>Pick the formula from what you know</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>You know</th><th>Find I</th><th>Find E</th><th>Find R</th><th>Find P</th></tr></thead>
+      <tbody>
+        <tr><td>E and R</td><td><code>E ÷ R</code></td><td>given</td><td>given</td><td><code>E² ÷ R</code></td></tr>
+        <tr><td>E and I</td><td>given</td><td>given</td><td><code>E ÷ I</code></td><td><code>I × E</code></td></tr>
+        <tr><td>I and R</td><td>given</td><td><code>I × R</code></td><td>given</td><td><code>I² × R</code></td></tr>
+        <tr><td>P and E</td><td><code>P ÷ E</code></td><td>given</td><td><code>E² ÷ P</code></td><td>given</td></tr>
+        <tr><td>P and I</td><td>given</td><td><code>P ÷ I</code></td><td><code>P ÷ I²</code></td><td>given</td></tr>
+        <tr><td>P and R</td><td><code>√(P ÷ R)</code></td><td><code>√(P × R)</code></td><td>given</td><td>given</td></tr>
+      </tbody>
+    </table></div>
+    <h3>The book’s examples</h3>
+    <ul>
+      <li>Example 1: 10 V and 5 Ω gives <code>I = 10 ÷ 5 = 2 A</code>. <span class="pg">104-16</span></li>
+      <li>Example 2: 200 mA and 10 Ω gives <code>E = .2 × 10 = 2 V</code>. Using 200 instead of .2 gives the wrong answer of 2,000 V. <span class="pg">104-17</span></li>
+      <li>Example 3: 100 V and 5 A gives <code>R = 100 ÷ 5 = 20 Ω</code>. <span class="pg">104-17</span></li>
+    </ul>
+    <h3>Proportionality</h3>
+    <ul>
+      <li>Current is <b>directly</b> proportional to voltage. 10 V on 5 Ω = 2 A, and 20 V on 5 Ω = 4 A: voltage doubled, so current doubled. <span class="pg">104-18, 104-19</span></li>
+      <li>Current is <b>inversely</b> proportional to resistance. 10 V on 5 Ω = 2 A, and 10 V on 10 Ω = 1 A: resistance doubled, so current halved. <span class="pg">104-19</span></li>
+    </ul>
+
+    <h2 id="g-1044"><span class="code">OBJECTIVE 104.4</span>Results of using different applied voltages</h2>
+    <ul>
+      <li>Electrical loads don’t come with a resistance value. You <b>derive it from the nameplate ratings</b>. That is the fixed (“hot” or operating) resistance. <span class="pg">104-17</span></li>
+      <li><b>Fixed resistance doesn’t change</b>, whatever voltage is applied. <span class="pg">104-18</span></li>
+      <li>Ratings (watts or amps with rated volts) are accurate <b>only at the rated voltage</b>. Less voltage than rated gives less power than rated, like a weak 10 V car battery making dim headlamps. <span class="pg">104-18</span></li>
+    </ul>
+    <h3>The method (always in this order)</h3>
+    <ol class="method">
+      <li><b>Find fixed R from the nameplate</b>: <code>R = E<sub>rated</sub>² ÷ P<sub>rated</sub></code> (watt rating) or <code>R = E<sub>rated</sub> ÷ I<sub>rated</sub></code> (amp rating). <span class="pg">104-19</span></li>
+      <li><b>Use the applied voltage</b> for everything else.</li>
+      <li>Current: <code>I = E<sub>applied</sub> ÷ R</code></li>
+      <li>Power: <code>P = E<sub>applied</sub>² ÷ R</code> (or <code>I × E<sub>applied</sub></code>)</li>
+      <li>Check the direction. Lower voltage means lower current and lower power. Higher voltage means higher.</li>
+    </ol>
+    <h3>Worked example from the book</h3>
+    <p>A lamp is rated 25 W at 12 V and the battery puts out 13 V. <span class="pg">104-19</span><br>
+      <code>R = 12² ÷ 25 = 5.76 Ω</code> → <code>I = 13 ÷ 5.76 = 2.2569 A</code> → <code>P = 13 × 2.2569 = 29.34 W</code></p>
+    <ul>
+      <li><b>Don’t round to fewer than four decimal places.</b> Rounding the current is why the book’s three power answers differ slightly. <span class="pg">104-20</span></li>
+      <li>Applied voltage <b>should not exceed</b> the rating. For resistive loads, <b>5% to 10% above</b> the rating is generally acceptable. <span class="pg">104-20</span></li>
+    </ul>
+
+    <h2 id="g-safety"><span class="code">104 SAFETY</span>Truck backing basics</h2>
+    <ul>
+      <li><b>Whenever possible, use a spotter.</b> It’s best to have one outside the truck. <span class="pg">104-21</span></li>
+      <li>No spotter? Be your own. Get out and check clearance at the back, both sides and the top. <b>Walk around the area and scope it out</b> before you start. <span class="pg">104-21</span></li>
+      <li>Get out and check again <b>after you’ve backed more than halfway</b> into the space. <span class="pg">104-21</span></li>
+      <li>Back from the <b>left side</b> (your “seeing side”) if you can, and check both mirrors often. <span class="pg">104-21</span></li>
+      <li>A truck has <b>10 times</b> as many blind spots as a car. The best advice is to avoid backing whenever you can. <span class="pg">104-21</span></li>
+      <li><b>Go slowly</b> and creep into place. If it’s not going right, pull forward, take another look, then try again. Watch for people, and plan so you interfere with traffic as little as possible. <span class="pg">104-21</span></li>
+      <li>Make sure you have clearance for the <b>top</b> of the rig, and watch for overhangs. <span class="pg">104-21</span></li>
+      <li>Straight truck: turn the wheel <b>in the direction you want the rear to go</b>. Combination rig: follow an <b>S curve</b> and turn the front the <b>opposite</b> way first. Don’t oversteer. <b>Back out of traffic, not into it.</b> <span class="pg">104-21</span></li>
+      <li>Leaving a trailer at the dock? <b>Chock its wheels.</b> <span class="pg">104-21</span></li>
+    </ul>
+
+    <h2 id="g-traps"><span class="code">WATCH OUT</span>Traps from your homework</h2>
+    <div class="trap"><b>R vs Ω.</b> In a formula, resistance is the letter <b>R</b>. Ω is the unit (ohms). Same pattern: E or V in formulas, volts for the unit. (104.2 #4) <span class="pg">104-16, Fig. 104-21</span></div>
+    <div class="trap"><b>Forgetting the square root.</b> With P and R, <code>P ÷ R</code> gives I², not I. Use <code>I = √(P ÷ R)</code>. (104.3 #2) <span class="pg">Fig. 104-25</span></div>
+    <div class="trap"><b>Using nameplate amps at a different voltage.</b> 1,750 W ÷ 120 V = 14.5833 A is only true at 120 V. At 110 V, find R first. (104.4 #1 choice d) <span class="pg">104-18, 104-19</span></div>
+    <div class="trap"><b>Stopping at R.</b> On 104.4 #8, 8.3333 Ω is the resistance. The question wants the current at 130 V, which is 15.6 A.</div>
+    <div class="trap"><b>Voltage down means current down.</b> They move the same way (directly proportional). (104.4 #9) <span class="pg">104-18</span></div>
+    <div class="trap"><b>Convert prefixes first.</b> 200 mA = .2 A and 2.2 kW = 2,200 W. <span class="pg">104-17</span></div>
+    <div class="trap"><b>Joule vs kilowatt-hour.</b> Both measure energy, but the book’s sentence is “When applied to electricity, a <b>joule</b> is a unit of energy.” <span class="pg">104-4</span></div>
+  </section>
+
+  <section id="homework" role="tabpanel" aria-labelledby="tab-homework" hidden>
+    <p class="lede">Every question from the worksheets you photographed, checked against the lesson text. Blank ones are filled in with the answer and the page that proves it.</p>
+    <div class="hw-sum" id="hwsum"></div>
+    <div id="hwfix"></div>
+    <div id="hwlist"></div>
+  </section>
+</div>
+
+<script id="engine">
+(function (root) {
+  'use strict';
+  var ri = function (n) { return Math.floor(Math.random() * n); };
+  var pick = function (a) { return a[ri(a.length)]; };
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = ri(i + 1); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function groupInt(s) { return s.replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  // Book style: up to 4 decimals (p. 104-20), no trailing zeros, commas, and ".25" for numbers under 1.
+  function fmt(x, dp) {
+    if (dp === undefined) dp = 4;
+    if (!isFinite(x)) return '—';
+    var neg = x < 0; x = Math.abs(x);
+    var d = dp;
+    if (x > 0 && x < 0.01) d = Math.max(dp, Math.ceil(-Math.log10(x)) + 3);
+    d = Math.min(d, 10);
+    var s = x.toFixed(d);
+    if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+    var parts = s.split('.');
+    var i = groupInt(parts[0]), f = parts[1];
+    var out = (i === '0' && f) ? '.' + f : (f ? i + '.' + f : i);
+    return (neg ? '-' : '') + out;
+  }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function art(n) { return /^[aeiou]/i.test(n) ? 'an' : 'a'; }
+
+  var OBJ = {
+    '104.1': { code: '104.1', name: 'Electron theory' },
+    '104.2': { code: '104.2', name: 'Circuits & current flow' },
+    '104.3': { code: '104.3', name: 'Ohm’s Law & power' },
+    '104.4': { code: '104.4', name: 'Applied voltage' },
+    'S': { code: 'Safety', name: 'Truck backing' }
+  };
+
+  function numChoices(ans, unit, cands, count) {
+    var out = [{ v: ans, ok: true }];
+    function far(v) {
+      for (var k = 0; k < out.length; k++) {
+        var o = out[k].v;
+        if (Math.abs(v - o) / Math.max(Math.abs(o), 1e-12) <= 0.03) return false;
+        if (fmt(v) === fmt(o)) return false;
+      }
+      return true;
+    }
+    var cs = shuffle(cands);
+    for (var c = 0; c < cs.length && out.length < count; c++) {
+      var v = cs[c].v;
+      if (isFinite(v) && v > 0 && far(v)) out.push({ v: v, why: cs[c].why });
+    }
+    var fill = [0.5, 2, 0.8, 1.25, 1.5, 0.6, 10, 0.1, 1.15, 0.85];
+    for (var k = 0; out.length < count && k < 80; k++) {
+      var f = fill[k % fill.length] * (1 + 0.07 * Math.floor(k / fill.length));
+      var w = ans * f;
+      if (far(w)) out.push({ v: w, why: null });
+    }
+    return shuffle(out).map(function (o) {
+      return { text: fmt(o.v) + (unit ? ' ' + unit : ''), ok: !!o.ok, why: o.why || null };
+    });
+  }
+  function textChoices(a, ds, n, keep) {
+    keep = keep || [];
+    var rest = shuffle(ds.filter(function (d) { return keep.indexOf(d) < 0; }));
+    var picked = keep.concat(rest).slice(0, n - 1);
+    return shuffle([{ text: a, ok: true }].concat(picked.map(function (t) { return { text: t, ok: false }; })));
+  }
+  function calc(o) {
+    return {
+      obj: o.obj, topic: o.topic, stem: o.stem, plate: o.plate || null, given: o.given || null, fig: o.fig || null,
+      choices: numChoices(o.ans, o.unit, o.cands, o.count || 5),
+      steps: o.steps.filter(Boolean), cite: o.cite, sig: o.sig
+    };
+  }
+
+  // ---------- data ----------
+  var EA = { 12: [10, 11, 13, 14], 115: [105, 110, 120, 125, 130], 120: [100, 105, 108, 110, 115, 125, 130], 130: [110, 115, 120],
+    208: [190, 200, 220, 240], 230: [208, 215, 220, 240], 240: [208, 215, 220, 230, 250], 277: [240, 265, 290], 480: [440, 460, 500] };
+  var WATT_LOADS = [
+    ['hair dryer', [1200, 1500, 1600, 1750, 1875], [120]],
+    ['toaster', [800, 900, 1100, 1200, 1500], [120]],
+    ['coffee maker', [600, 900, 1000, 1200], [120]],
+    ['space heater', [750, 1000, 1500], [120]],
+    ['blender', [300, 350, 450, 600], [120]],
+    ['incandescent lamp', [25, 40, 60, 75, 100, 150], [120, 130]],
+    ['incandescent lamp', [100, 150, 200, 300], [277]],
+    ['water heater element', [3500, 4500, 5000, 5500], [230, 240]],
+    ['cooking range', [8000, 9500, 12000], [240]],
+    ['baseboard heater', [500, 750, 1000, 1500, 2000, 2500], [208, 240, 277]],
+    ['plate warmer heating element', [2000, 3000, 4500], [208, 240]],
+    ['electric oven heating element', [2400, 3000, 3400], [240]],
+    ['electric unit heater', [5000, 7500, 10000], [208, 240, 480]],
+    ['clothes dryer heating element', [4800, 5000, 5400], [240]],
+    ['electric kettle', [1000, 1200, 1500], [120]],
+    ['lamp', [10, 21, 25, 35, 55], [12]]
+  ];
+  var AMP_LOADS = [
+    ['drill', [2.5, 3.5, 4.8, 5.4, 6.5, 7.5], [120]],
+    ['7¼" circular saw', [10, 12, 13, 15], [120]],
+    ['garage door opener motor', [3.8, 4.2, 5.5, 13.8], [115, 120]],
+    ['shop vacuum', [6, 8, 10, 12], [120]],
+    ['reciprocating saw', [9, 10, 11, 12], [120]],
+    ['angle grinder', [6, 7.5, 9, 11], [120]],
+    ['hammer drill', [7, 8.5, 10], [120]]
+  ];
+  function wattLoad(no12) {
+    var L;
+    do { L = pick(WATT_LOADS); } while (no12 && L[2][0] === 12);
+    return { n: L[0], P: pick(L[1]), E: pick(L[2]) };
+  }
+  function ampLoad() { var L = pick(AMP_LOADS); return { n: L[0], I: pick(L[1]), E: pick(L[2]) }; }
+  var GEN_R = [5, 8, 10, 12, 15, 20, 24, 30, 40, 48, 60, 100, 120, 150, 200, 240, 400, 480, 600, 1000, 1200, 1500, 2000];
+  var GEN_E = [6, 12, 24, 48, 100, 120, 208, 240, 277, 480];
+  var GEN_I = [0.05, 0.1, 0.2, 0.25, 0.5, 1.5, 2, 3, 4, 5, 8, 10, 12, 15, 20, 25, 30, 45];
+  var GEN_mA = [20, 50, 100, 150, 200, 250, 500, 750];
+  var GEN_P = [100, 250, 400, 500, 900, 1000, 1500, 2000, 2500, 3600, 4000, 4500];
+  var GEN_Rs = [4, 8, 10, 16, 20, 25, 40, 50, 100];
+  var SMALL_I = [0.1, 0.25, 0.5, 1, 2, 2.5, 3, 4, 5, 8, 10, 12, 15, 20];
+  var SMALL_R = [2, 4, 5, 8, 10, 12, 15, 20, 24, 40, 48, 60, 100];
+  var WHEEL = 'Fig. 104-25 (p. 104-18)';
+  function pw(P, kw) { return kw ? fmt(P / 1000) + ' kW' : fmt(P) + ' W'; }
+
+  // ---------- 104.3: two known values -> find another ----------
+  function tI_ER() {
+    var E = pick(GEN_E), R = pick(GEN_R), I = E / R;
+    return calc({ obj: '104.3', topic: 'Current from E and R', ans: I, unit: 'A',
+      stem: pick(['If a circuit has ' + fmt(R) + ' ohms of resistance and ' + fmt(E) + ' volts applied, what is its current flow?',
+        'A circuit with ' + fmt(R) + ' Ω of resistance has ' + fmt(E) + ' volts applied. Its current flow is ___ amps.',
+        'A voltmeter reads ' + fmt(E) + ' V across a ' + fmt(R) + ' Ω load. What current flows?']),
+      given: [['E', fmt(E) + ' V'], ['R', fmt(R) + ' Ω']],
+      cands: [{ v: R / E, why: 'You flipped it (R ÷ E). Current is I = E ÷ R, with volts on top.' },
+        { v: E * R, why: 'You multiplied. Cover I in the triangle: E sits over R, so divide.' },
+        { v: E * E / R, why: 'E² ÷ R is the power in watts, not the current.' },
+        { v: I * 10, why: 'Decimal slip. Redo the division and watch the decimal point.' }],
+      steps: ['You know <b>E</b> and <b>R</b>. You want <b>I</b>.', 'Cover I in the Ohm’s Law triangle: <code>I = E ÷ R</code>',
+        '<code>I = ' + fmt(E) + ' ÷ ' + fmt(R) + ' = ' + fmt(I) + ' A</code>'],
+      cite: 'p. 104-16 (Fig. 104-21, Example 1)', sig: 'IER' + E + '/' + R });
+  }
+  function tE_IR() {
+    var useMA = Math.random() < 0.35, R = pick(GEN_R), I, Ishow, conv = null, cands = [];
+    if (useMA) {
+      var mA = pick(GEN_mA); I = mA / 1000; Ishow = fmt(mA) + ' mA';
+      conv = 'Convert first: <code>' + fmt(mA) + ' mA ÷ 1,000 = ' + fmt(I) + ' A</code> (milli = .001, p. 104-3).';
+      cands.push({ v: mA * R, why: 'You used ' + fmt(mA) + ' instead of ' + fmt(I) + '. Convert mA to amps first. The book warns about this exact mistake in Example 2 (p. 104-17).' });
+    } else { I = pick(GEN_I); Ishow = fmt(I) + ' A'; }
+    var E = I * R;
+    cands.push({ v: I / R, why: 'You divided. Cover E in the triangle: I and R sit side by side, so multiply.' },
+      { v: R / I, why: 'R ÷ I isn’t on the wheel. Voltage is E = I × R.' },
+      { v: I * I * R, why: 'I² × R is the power in watts, not the voltage.' });
+    return calc({ obj: '104.3', topic: 'Voltage from I and R', ans: E, unit: 'V',
+      stem: pick(['If a circuit has a resistance of ' + fmt(R) + ' ohms and a current flow of ' + Ishow + ', what is its applied voltage?',
+        'An ammeter reads ' + Ishow + ' and the load resistance is ' + fmt(R) + ' Ω. What voltage is the source supplying?']),
+      given: [['I', Ishow], ['R', fmt(R) + ' Ω']], cands: cands,
+      steps: ['You know <b>I</b> and <b>R</b>. You want <b>E</b>.', conv, 'Cover E in the triangle: <code>E = I × R</code>',
+        '<code>E = ' + fmt(I) + ' × ' + fmt(R) + ' = ' + fmt(E) + ' V</code>'],
+      cite: 'p. 104-16 (Fig. 104-21) · Example 2, p. 104-17', sig: 'EIR' + Ishow + '/' + R });
+  }
+  function tR_EI() {
+    var E, I, stem, plate = null, given = null;
+    if (Math.random() < 0.6) {
+      var L = ampLoad(); E = L.E; I = L.I;
+      plate = { name: L.n, rate: [fmt(I) + ' A', fmt(E) + ' V'] };
+      stem = pick(['What is the resistance of ' + art(L.n) + ' ' + L.n + ' if the nameplate supplies the following information?',
+        'Find the resistance of ' + art(L.n) + ' ' + L.n + ' from its nameplate.']);
+    } else {
+      E = pick(GEN_E); I = pick(GEN_I); given = [['E', fmt(E) + ' V'], ['I', fmt(I) + ' A']];
+      stem = pick(['If a circuit has ' + fmt(E) + ' volts applied with a current flow of ' + fmt(I) + ' amperes, what is its resistance?',
+        'A voltmeter reads ' + fmt(E) + ' V and an ammeter reads ' + fmt(I) + ' A. What is the resistance of the load?']);
+    }
+    var R = E / I;
+    return calc({ obj: '104.3', topic: 'Resistance from E and I', ans: R, unit: 'Ω', stem: stem, plate: plate, given: given,
+      cands: [{ v: I / E, why: 'You flipped it. R = E ÷ I, with volts on top.' },
+        { v: E * I, why: 'E × I is the power in watts, not the resistance.' },
+        { v: E / (I * I), why: 'E ÷ I² isn’t on the wheel. Use R = E ÷ I.' }],
+      steps: ['You know <b>E</b> and <b>I</b>. You want <b>R</b>.', 'Cover R in the triangle: <code>R = E ÷ I</code>',
+        '<code>R = ' + fmt(E) + ' ÷ ' + fmt(I) + ' = ' + fmt(R) + ' Ω</code>'],
+      cite: 'p. 104-16 (Fig. 104-21) · Example 3, p. 104-17', sig: 'REI' + E + '/' + I });
+  }
+  function tI_PE() {
+    var L = wattLoad(true), kw = L.P >= 1000 && Math.random() < 0.5, I = L.P / L.E;
+    var cands = [{ v: L.E / L.P, why: 'You flipped it. I = P ÷ E, with watts on top.' },
+      { v: L.P * L.E, why: 'P × E isn’t a formula. Divide watts by volts.' },
+      { v: L.E * L.E / L.P, why: 'E² ÷ P is the resistance (ohms), not the current.' }];
+    if (kw) cands.push({ v: (L.P / 1000) / L.E, why: 'You didn’t convert kW to watts. Multiply kW by 1,000 first.' });
+    return calc({ obj: '104.3', topic: 'Current from P and E', ans: I, unit: 'A',
+      stem: pick(['A load is rated to use ' + pw(L.P, kw) + ' at ' + fmt(L.E) + ' volts. How much current will this load draw?',
+        'A ' + L.n + ' is rated ' + pw(L.P, kw) + ' at ' + fmt(L.E) + ' volts. How many amps does it draw at ' + fmt(L.E) + ' volts?']),
+      plate: { name: L.n, rate: [pw(L.P, kw), fmt(L.E) + ' V'] }, cands: cands,
+      steps: ['You know <b>P</b> and <b>E</b>. You want <b>I</b>.', kw ? 'Convert: <code>' + fmt(L.P / 1000) + ' kW × 1,000 = ' + fmt(L.P) + ' W</code>' : null,
+        'From the wheel: <code>I = P ÷ E</code>', '<code>I = ' + fmt(L.P) + ' ÷ ' + fmt(L.E) + ' = ' + fmt(I) + ' A</code>'],
+      cite: WHEEL, sig: 'IPE' + L.n + L.P + '/' + L.E });
+  }
+  function tP_IE() {
+    var I, E, plate = null, given = null, stem;
+    if (Math.random() < 0.5) {
+      var L = ampLoad(); I = L.I; E = L.E; plate = { name: L.n, rate: [fmt(I) + ' A', fmt(E) + ' V'] };
+      stem = 'How much power does ' + art(L.n) + ' ' + L.n + ' use at its rated voltage? The nameplate is shown below.';
+    } else {
+      E = pick([120, 208, 240, 277, 480]); I = pick(GEN_I); given = [['E', fmt(E) + ' V'], ['I', fmt(I) + ' A']];
+      stem = 'What is the power used by a circuit that is operating at ' + fmt(E) + ' volts and pulling ' + fmt(I) + ' amps?';
+    }
+    var P = I * E, kw = P >= 10000, d = kw ? 1000 : 1;
+    var cands = [{ v: E / I / d, why: 'E ÷ I is the resistance, not the power.' },
+      { v: I / E / d, why: 'I ÷ E isn’t a power formula. P = I × E.' },
+      { v: I * I * E / d, why: 'You squared the current. With I and E, power is simply P = I × E.' }];
+    if (kw) cands.push({ v: P, why: 'You forgot to divide by 1,000 to change watts to kW.' }, { v: P / 1e6, why: 'You divided by 1,000 one time too many.' });
+    return calc({ obj: '104.3', topic: 'Power from I and E', ans: P / d, unit: kw ? 'kW' : 'W', stem: stem, plate: plate, given: given, cands: cands,
+      steps: ['You know <b>I</b> and <b>E</b>. You want <b>P</b>.', 'Basic power formula: <code>P = I × E</code>',
+        '<code>P = ' + fmt(I) + ' × ' + fmt(E) + ' = ' + fmt(P) + ' W</code>', kw ? '<code>' + fmt(P) + ' W ÷ 1,000 = ' + fmt(P / 1000) + ' kW</code>' : null],
+      cite: 'p. 104-17 (P = I × E)', sig: 'PIE' + I + '/' + E });
+  }
+  function tP_ER() {
+    var E = pick(GEN_E), R = pick(GEN_R), P = E * E / R;
+    return calc({ obj: '104.3', topic: 'Power from E and R', ans: P, unit: 'W',
+      stem: pick(['A ' + fmt(R) + ' Ω resistive load has ' + fmt(E) + ' volts applied. How much power does it use?',
+        'What is the power in a circuit with ' + fmt(E) + ' volts applied across ' + fmt(R) + ' ohms of resistance?']),
+      given: [['E', fmt(E) + ' V'], ['R', fmt(R) + ' Ω']],
+      cands: [{ v: E / R, why: 'E ÷ R is the current in amps. For power, square E first: P = E² ÷ R.' },
+        { v: E * R, why: 'E × R isn’t on the wheel.' },
+        { v: E * E * R, why: 'Divide by R, don’t multiply: P = E² ÷ R.' },
+        { v: (E / R) * (E / R), why: 'That’s I². You still need to multiply by R (P = I² × R).' }],
+      steps: ['You know <b>E</b> and <b>R</b>. You want <b>P</b>.', 'From the wheel: <code>P = E² ÷ R</code>',
+        '<code>P = ' + fmt(E) + '² ÷ ' + fmt(R) + ' = ' + fmt(E * E) + ' ÷ ' + fmt(R) + ' = ' + fmt(P) + ' W</code>'],
+      cite: WHEEL, sig: 'PER' + E + '/' + R });
+  }
+  function tP_IR() {
+    var I = pick(SMALL_I), R = pick(SMALL_R), P = I * I * R;
+    return calc({ obj: '104.3', topic: 'Power from I and R', ans: P, unit: 'W',
+      stem: pick(['A current of ' + fmt(I) + ' amps flows through a ' + fmt(R) + ' Ω load. How much power does the load use?',
+        'What is the power used by a ' + fmt(R) + ' ohm resistance carrying ' + fmt(I) + ' amperes?']),
+      given: [['I', fmt(I) + ' A'], ['R', fmt(R) + ' Ω']],
+      cands: [{ v: I * R, why: 'I × R is the voltage. For power, square the current: P = I² × R.' },
+        { v: I * R * R, why: 'You squared R instead of I.' },
+        { v: R / I, why: 'R ÷ I isn’t a power formula.' }],
+      steps: ['You know <b>I</b> and <b>R</b>. You want <b>P</b>.', 'From the wheel: <code>P = I² × R</code>',
+        '<code>P = ' + fmt(I) + '² × ' + fmt(R) + ' = ' + fmt(I * I) + ' × ' + fmt(R) + ' = ' + fmt(P) + ' W</code>'],
+      cite: WHEEL, sig: 'PIR' + I + '/' + R });
+  }
+  function tR_PE() {
+    var L = wattLoad(true), R = L.E * L.E / L.P;
+    return calc({ obj: '104.3', topic: 'Resistance from P and E', ans: R, unit: 'Ω',
+      stem: pick(['What is the resistance of ' + art(L.n) + ' ' + L.n + ' if the manufacturer supplies the following information?',
+        'Find the resistance of ' + art(L.n) + ' ' + L.n + ' rated ' + fmt(L.P) + ' watts at ' + fmt(L.E) + ' volts.']),
+      plate: { name: L.n, rate: [fmt(L.P) + ' W', fmt(L.E) + ' V'] },
+      cands: [{ v: L.E / L.P, why: 'E ÷ P isn’t on the wheel. Square the voltage first: R = E² ÷ P.' },
+        { v: L.P / L.E, why: 'P ÷ E is the current in amps, not the resistance.' },
+        { v: L.P / (L.E * L.E), why: 'Upside down. Volts squared go on top: R = E² ÷ P.' }],
+      steps: ['You know <b>P</b> and <b>E</b> from the nameplate. You want <b>R</b>.',
+        'From the wheel: <code>R = E² ÷ P</code>. The book uses this same formula to find fixed resistance (p. 104-19).',
+        '<code>R = ' + fmt(L.E) + '² ÷ ' + fmt(L.P) + ' = ' + fmt(L.E * L.E) + ' ÷ ' + fmt(L.P) + ' = ' + fmt(R) + ' Ω</code>'],
+      cite: WHEEL + ' · p. 104-19', sig: 'RPE' + L.P + '/' + L.E });
+  }
+  function tI_PR() {
+    var P = pick(GEN_P), R = pick(GEN_Rs), I = Math.sqrt(P / R), kw = Math.random() < 0.35;
+    var cands = [{ v: P / R, why: 'P ÷ R gives I², not I. Take the square root: I = √(P ÷ R). This was the mistake on 104.3 Worksheet #2.' },
+      { v: Math.sqrt(P * R), why: '√(P × R) is the voltage, not the current.' },
+      { v: P * R, why: 'P × R isn’t a current formula.' }];
+    if (kw) cands.push({ v: Math.sqrt((P / 1000) / R), why: 'Convert kW to watts before you divide.' });
+    return calc({ obj: '104.3', topic: 'Current from P and R', ans: I, unit: 'A',
+      stem: 'You know that a load connected to a circuit is using ' + pw(P, kw) + ' of power and the resistance of the load is ' + fmt(R) + ' ohms. What is the current drawn by the load?',
+      given: [['P', pw(P, kw)], ['R', fmt(R) + ' Ω']], cands: cands,
+      steps: ['You know <b>P</b> and <b>R</b>. You want <b>I</b>.', kw ? 'Convert: <code>' + fmt(P / 1000) + ' kW × 1,000 = ' + fmt(P) + ' W</code>' : null,
+        'From the wheel: <code>I = √(P ÷ R)</code>', '<code>P ÷ R = ' + fmt(P) + ' ÷ ' + fmt(R) + ' = ' + fmt(P / R) + '</code>',
+        '<code>I = √' + fmt(P / R) + ' = ' + fmt(I) + ' A</code>. Don’t skip the square root.'],
+      cite: WHEEL, sig: 'IPR' + P + '/' + R });
+  }
+  function tE_PI() {
+    var E = pick([12, 24, 120, 208, 240, 277, 480]), I = pick(SMALL_I), P = E * I;
+    return calc({ obj: '104.3', topic: 'Voltage from P and I', ans: E, unit: 'V',
+      stem: 'A load uses ' + fmt(P) + ' watts while drawing ' + fmt(I) + ' amps. What voltage is applied?',
+      given: [['P', fmt(P) + ' W'], ['I', fmt(I) + ' A']],
+      cands: [{ v: I / P, why: 'You flipped it. E = P ÷ I.' }, { v: P * I, why: 'P × I isn’t on the wheel.' },
+        { v: P / (I * I), why: 'P ÷ I² is the resistance, not the voltage.' }],
+      steps: ['You know <b>P</b> and <b>I</b>. You want <b>E</b>.', 'From the wheel: <code>E = P ÷ I</code>',
+        '<code>E = ' + fmt(P) + ' ÷ ' + fmt(I) + ' = ' + fmt(E) + ' V</code>'],
+      cite: WHEEL, sig: 'EPI' + P + '/' + I });
+  }
+  function tE_PR() {
+    var E = pick(GEN_E), R = pick(GEN_Rs), P = E * E / R;
+    return calc({ obj: '104.3', topic: 'Voltage from P and R', ans: E, unit: 'V',
+      stem: 'A ' + fmt(R) + ' Ω heating element is using ' + fmt(P) + ' watts. What voltage is applied to it?',
+      given: [['P', fmt(P) + ' W'], ['R', fmt(R) + ' Ω']],
+      cands: [{ v: P * R, why: 'P × R gives E². Take the square root: E = √(P × R).' },
+        { v: Math.sqrt(P / R), why: '√(P ÷ R) is the current, not the voltage.' },
+        { v: P / R, why: 'P ÷ R is I².' }],
+      steps: ['You know <b>P</b> and <b>R</b>. You want <b>E</b>.', 'From the wheel: <code>E = √(P × R)</code>',
+        '<code>P × R = ' + fmt(P) + ' × ' + fmt(R) + ' = ' + fmt(P * R) + '</code>', '<code>E = √' + fmt(P * R) + ' = ' + fmt(E) + ' V</code>'],
+      cite: WHEEL, sig: 'EPR' + E + '/' + R });
+  }
+  function tR_PI() {
+    var I = pick(SMALL_I), R = pick(SMALL_R), P = I * I * R;
+    return calc({ obj: '104.3', topic: 'Resistance from P and I', ans: R, unit: 'Ω',
+      stem: 'A load uses ' + fmt(P) + ' watts and draws ' + fmt(I) + ' amps. What is its resistance?',
+      given: [['P', fmt(P) + ' W'], ['I', fmt(I) + ' A']],
+      cands: [{ v: P / I, why: 'P ÷ I is the voltage. Divide by I² for resistance.' },
+        { v: I * I / P, why: 'Upside down. R = P ÷ I².' }, { v: P * I * I, why: 'Divide, don’t multiply: R = P ÷ I².' }],
+      steps: ['You know <b>P</b> and <b>I</b>. You want <b>R</b>.', 'From the wheel: <code>R = P ÷ I²</code>',
+        '<code>R = ' + fmt(P) + ' ÷ ' + fmt(I) + '² = ' + fmt(P) + ' ÷ ' + fmt(I * I) + ' = ' + fmt(R) + ' Ω</code>'],
+      cite: WHEEL, sig: 'RPI' + P + '/' + I });
+  }
+
+  // ---------- 104.2 ----------
+  function tMultiLoad() {
+    var L = wattLoad(true), n = pick([2, 3, 4]), kw = L.P >= 1000 && Math.random() < 0.5, I1 = L.P / L.E, T = n * I1;
+    return calc({ obj: '104.2', topic: 'Identical loads on one circuit', ans: T, unit: 'A', count: 4,
+      stem: 'A load is rated to use ' + pw(L.P, kw) + ' at ' + fmt(L.E) + ' volts. If ' + n + ' of these loads are connected to the same circuit, what is the total circuit current?',
+      plate: { name: L.n + ' (×' + n + ')', rate: [pw(L.P, kw), fmt(L.E) + ' V'] },
+      cands: [{ v: I1, why: 'That’s the current of one load. Each identical load adds the same current.' },
+        { v: I1 / n, why: 'More loads add current. They don’t split it.' },
+        { v: n * n * I1, why: 'The current adds once per load (× ' + n + '), not × ' + n + '².' }],
+      steps: [kw ? 'Convert: <code>' + fmt(L.P / 1000) + ' kW = ' + fmt(L.P) + ' W</code>' : null,
+        'One load: <code>I = P ÷ E = ' + fmt(L.P) + ' ÷ ' + fmt(L.E) + ' = ' + fmt(I1) + ' A</code>',
+        n + ' identical loads: <code>' + fmt(I1) + ' × ' + n + ' = ' + fmt(T) + ' A</code>. That’s ' + ['', '', 'double', 'three times', 'four times'][n] + ' the current of one load.'],
+      cite: WHEEL + ' · 104.2 Worksheet #6', sig: 'ML' + L.P + '/' + L.E + 'x' + n });
+  }
+  function tWire() {
+    var pr = pick([[14, 10], [14, 12], [12, 10], [10, 8], [12, 8], [14, 8]]), big = pr[0], small = pr[1];
+    var len = pick([50, 100, 150, 250]), lesser = Math.random() < 0.65, flip = Math.random() < 0.5;
+    var c1 = flip ? big : small, c2 = flip ? small : big, want = lesser ? small : big;
+    return { obj: '104.2', topic: 'Wire size and resistance',
+      stem: 'Which of the ' + len + '′ long circuits below has the ' + (lesser ? 'lesser' : 'greater') + ' resistance?',
+      choices: [{ text: 'Circuit #1: uses ' + c1 + ' AWG wire', ok: c1 === want }, { text: 'Circuit #2: uses ' + c2 + ' AWG wire', ok: c2 === want }],
+      steps: ['A <b>smaller AWG number is a bigger wire</b>. On 104.2 Worksheet #3, 8 AWG is .128" and 10 AWG is .116".',
+        '“The bigger the pipe, the more water will flow. The same is true for electron flow.” (p. 104-5)',
+        'So over the same length, ' + small + ' AWG (bigger) has <b>less</b> resistance than ' + big + ' AWG (smaller).'],
+      cite: 'p. 104-5 · 104.2 Worksheet #3 and #9 · resistance section p. 104-9 (not sent yet)', sig: 'W' + big + small + len + lesser + flip };
+  }
+  var SVG = {
+    battery: '<svg viewBox="0 0 120 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M8 24H52M68 24H112M52 8V40"/><path d="M68 15V33" stroke-width="5"/><text x="38" y="14" fill="currentColor" stroke="none" font-size="14" font-family="sans-serif">+</text><text x="76" y="14" fill="currentColor" stroke="none" font-size="14" font-family="sans-serif">−</text></svg>',
+    winding: '<svg viewBox="0 0 120 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="3.2"/><circle cx="108" cy="9" r="3.2"/><path d="M12 12.5V24a8 8 0 0 0 16 0a8 8 0 0 0 16 0a8 8 0 0 0 16 0a8 8 0 0 0 16 0a8 8 0 0 0 16 0a8 8 0 0 0 16 0V12.5"/></svg>',
+    breaker: '<svg viewBox="0 0 120 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M8 34H40M80 34H112"/><path d="M40 34A20 20 0 0 1 80 34"/></svg>',
+    fuseBox: '<svg viewBox="0 0 120 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M8 24H112"/><rect x="36" y="13" width="48" height="22"/><path d="M44 13V35M76 13V35"/></svg>',
+    fuseS: '<svg viewBox="0 0 120 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M8 24H36C42 4 56 4 60 24C64 44 78 44 84 24H112"/></svg>',
+    resistor: '<svg viewBox="0 0 120 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 24H30l5 -11l10 22l10 -22l10 22l10 -22l10 22l5 -11H112"/></svg>',
+    'switch': '<svg viewBox="0 0 120 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M8 32H37M83 32H112M43 30L76 12"/><circle cx="40" cy="32" r="3"/><circle cx="80" cy="32" r="3"/></svg>'
+  };
+  var SYM = {
+    battery: { name: 'Battery', short: 'battery', cite: 'p. 104-5, Fig. 104-7', why: 'Two lines. The shorter line is the negative terminal (p. 104-5).' },
+    winding: { name: 'Transformer winding (coil)', short: 'transformer winding', cite: 'p. 104-13, Fig. 104-15', why: 'Generators and transformers are coils of wire called windings, drawn as a row of loops (Fig. 104-15).' },
+    breaker: { name: 'Circuit breaker', short: 'circuit breaker', cite: 'p. 104-13, Fig. 104-16', why: 'A circuit breaker is drawn as an arc bridging a gap (Fig. 104-16).' },
+    fuseBox: { name: 'Fuse', short: 'fuse', cite: 'p. 104-13, Fig. 104-16', why: 'A fuse can be drawn as a box the line passes through, or as an S-shaped curve (Fig. 104-16).' },
+    fuseS: { name: 'Fuse', short: 'fuse', cite: 'p. 104-13, Fig. 104-16', why: 'A fuse can be drawn as an S-shaped curve, or as a box the line passes through (Fig. 104-16).' },
+    resistor: { name: 'Resistance (a resistive load)', short: 'resistance or resistive load (like a lamp or heating element)', cite: 'Figs. 104-19, 104-20 and 104-27', why: 'A zigzag line, used for the lamp in Fig. 104-27 and the heating elements in Figs. 104-19 and 104-20.' }
+  };
+  function isFuse(k) { return k === 'fuseBox' || k === 'fuseS'; }
+  function tSymbol() {
+    var keys = ['battery', 'winding', 'breaker', 'fuseBox', 'fuseS', 'resistor'], k = pick(keys), S = SYM[k];
+    if (Math.random() < 0.5) {
+      var pool = ['battery', 'winding', 'breaker', pick(['fuseBox', 'fuseS']), 'resistor', 'switch'].filter(function (x) { return x !== k && !(isFuse(k) && isFuse(x)); });
+      var others = shuffle(pool).slice(0, 3);
+      var ch = [{ html: SVG[k], ok: true }].concat(others.map(function (o) {
+        return { html: SVG[o], ok: false, why: o === 'switch' ? 'That symbol isn’t one of the ones in this lesson.' : 'That symbol is a ' + SYM[o].name.toLowerCase() + '. ' + SYM[o].why };
+      }));
+      return { obj: '104.2', topic: 'Circuit symbols', stem: 'Which of these symbols is used to represent a ' + S.short + '?', choices: shuffle(ch),
+        steps: [S.why], cite: S.cite, sig: 'SY1' + k + others.join() };
+    }
+    var names = ['Battery', 'Transformer winding (coil)', 'Circuit breaker', 'Fuse', 'Resistance (a resistive load)'];
+    var wrong = shuffle(names.filter(function (n) { return n !== S.name; })).slice(0, 3);
+    return { obj: '104.2', topic: 'Circuit symbols', stem: 'What does this symbol represent?', fig: SVG[k],
+      choices: shuffle([{ text: S.name, ok: true }].concat(wrong.map(function (w) { return { text: w, ok: false }; }))),
+      steps: [S.why], cite: S.cite, sig: 'SY2' + k };
+  }
+
+  // ---------- 104.1 numeric ----------
+  var CONDUCTORS = ['copper', 'brass', 'silver', 'aluminum', 'platinum', 'gold', 'zinc'];
+  var INSULATORS = ['some plastics', 'rubber', 'glass', 'mica', 'some ceramics', 'air'];
+  var MAT_STEPS = ['Conductors listed on p. 104-6: copper, brass, silver, aluminum, platinum, gold and zinc.',
+    'Insulators listed on p. 104-6: some plastics, rubber, glass, mica, some ceramics and air.'];
+  function tMaterials() {
+    var m = ri(3);
+    if (m < 2) {
+      var wantIns = m === 0, a = pick(wantIns ? INSULATORS : CONDUCTORS), ds = shuffle(wantIns ? CONDUCTORS : INSULATORS).slice(0, 3);
+      return { obj: '104.1', topic: 'Conductors & insulators', stem: wantIns ? 'Which of these is a good insulator?' : 'Which of these is an excellent conductor?',
+        choices: shuffle([{ text: cap(a), ok: true }].concat(ds.map(function (d) { return { text: cap(d), ok: false, why: cap(d) + ' is listed as ' + (wantIns ? 'an excellent conductor.' : 'a good insulator.') }; }))),
+        steps: MAT_STEPS, cite: 'p. 104-6', sig: 'MAT' + m + a + ds.join() };
+    }
+    var pool = shuffle(CONDUCTORS.concat(INSULATORS)).slice(0, 3);
+    if (!pool.some(function (x) { return CONDUCTORS.indexOf(x) >= 0; })) pool[ri(3)] = pick(CONDUCTORS);
+    var R = ['I', 'II', 'III'], isC = pool.map(function (x) { return CONDUCTORS.indexOf(x) >= 0; });
+    var combos = [[0], [1], [2], [0, 1], [0, 2], [1, 2], [0, 1, 2]];
+    function label(c) { return c.length === 3 ? 'I, II & III' : c.length === 2 ? R[c[0]] + ' & ' + R[c[1]] + ' only' : R[c[0]] + ' only'; }
+    var nC = isC.filter(Boolean).length;
+    var correct = combos.filter(function (c) { return c.length === nC && c.every(function (i) { return isC[i]; }); })[0];
+    var wrong = shuffle(combos.filter(function (c) { return c !== correct; })).slice(0, 4);
+    return { obj: '104.1', topic: 'Conductors & insulators',
+      stem: 'Which materials listed below are good conductors?<span class="roman">I. ' + cap(pool[0]) + '<br>II. ' + cap(pool[1]) + '<br>III. ' + cap(pool[2]) + '</span>',
+      choices: shuffle([{ text: label(correct), ok: true }].concat(wrong.map(function (c) { return { text: label(c), ok: false }; }))),
+      steps: MAT_STEPS, cite: 'p. 104-6', sig: 'MATR' + pool.join() };
+  }
+  var PREFIX = [
+    { p: 'μ', name: 'micro', f: 1e-6, vals: [5, 25, 50, 150, 500, 750] },
+    { p: 'm', name: 'milli', f: 1e-3, vals: [5, 20, 35, 50, 75, 150, 200, 250, 450, 750, 1500] },
+    { p: 'k', name: 'kilo', f: 1e3, vals: [0.48, 1.5, 2.2, 4.16, 4.5, 9.5, 13.8, 25] },
+    { p: 'M', name: 'mega', f: 1e6, vals: [0.5, 1.2, 2, 5] }
+  ];
+  function tConvert() {
+    var U = pick([{ u: 'A', cite: 'p. 104-3' }, { u: 'V', cite: 'p. 104-8' }, { u: 'W', cite: 'p. 104-3 and 104-8 (kilo = × 1,000) · 104.3 Worksheet #1' }]);
+    var pf = U.u === 'W' ? PREFIX[2] : pick(PREFIX);
+    var x = pick(pf.vals), base = x * pf.f, toBase = Math.random() < 0.65;
+    var line = '1 ' + pf.p + U.u + ' = ' + fmt(pf.f) + ' ' + U.u + ' (' + pf.name + ')';
+    if (toBase) {
+      return calc({ obj: '104.1', topic: 'Metric prefixes', ans: base, unit: U.u, count: 4,
+        stem: fmt(x) + ' ' + pf.p + U.u + ' = ___ ' + U.u,
+        cands: [{ v: x / pf.f, why: 'Wrong direction. ' + cap(pf.name) + ' means × ' + fmt(pf.f) + ', so the number gets ' + (pf.f < 1 ? 'smaller' : 'bigger') + ' in base units.' },
+          { v: base * 1000, why: 'Off by 1,000. Check the prefix value.' }, { v: base / 1000, why: 'Off by 1,000. Check the prefix value.' }],
+        steps: [line, '<code>' + fmt(x) + ' × ' + fmt(pf.f) + ' = ' + fmt(base) + ' ' + U.u + '</code>'], cite: U.cite, sig: 'CV' + x + pf.p + U.u });
+    }
+    return calc({ obj: '104.1', topic: 'Metric prefixes', ans: x, unit: pf.p + U.u, count: 4,
+      stem: fmt(base) + ' ' + U.u + ' = ___ ' + pf.p + U.u,
+      cands: [{ v: base * pf.f, why: 'Wrong direction. To change base units into ' + pf.name + 'units, divide by ' + fmt(pf.f) + '.' },
+        { v: x * 1000, why: 'Off by 1,000. Check the prefix value.' }, { v: x / 1000, why: 'Off by 1,000. Check the prefix value.' }],
+      steps: [line, '<code>' + fmt(base) + ' ÷ ' + fmt(pf.f) + ' = ' + fmt(x) + ' ' + pf.p + U.u + '</code>'], cite: U.cite, sig: 'CVR' + x + pf.p + U.u });
+  }
+  function tCharge() {
+    var m = pick(['C', 'A', 'J', 'Ws', 'kWh', 'toKwh']), A, s, C, V, W, k;
+    if (m === 'C') {
+      A = pick([0.5, 1, 2, 2.5, 4, 5, 10, 15, 20]); s = pick([2, 3, 5, 10, 30, 60, 120]);
+      return calc({ obj: '104.1', topic: 'Coulombs', ans: A * s, unit: 'C', count: 4,
+        stem: 'A current of ' + fmt(A) + ' amperes flows for ' + s + ' seconds. How many coulombs of charge pass a point?',
+        cands: [{ v: A / s, why: 'Multiply: C = A × s.' }, { v: s / A, why: 'Multiply: C = A × s.' }, { v: A * s * 60, why: 'The time is already in seconds. No × 60.' }],
+        steps: ['A coulomb is the charge carried in one second by one ampere.', '<code>C = A × s = ' + fmt(A) + ' × ' + s + ' = ' + fmt(A * s) + ' C</code>'], cite: 'p. 104-4 (C = A × s)', sig: 'Q' + A + '/' + s });
+    }
+    if (m === 'A') {
+      C = pick([10, 20, 30, 60, 120, 300, 600]); s = pick([2, 3, 5, 10, 30, 60]);
+      return calc({ obj: '104.1', topic: 'Coulombs', ans: C / s, unit: 'A', count: 4,
+        stem: fmt(C) + ' coulombs pass a point in a conductor in ' + s + ' seconds. What is the current?',
+        cands: [{ v: C * s, why: 'Divide: A = C ÷ s.' }, { v: s / C, why: 'Upside down. A = C ÷ s.' }],
+        steps: ['Current in terms of coulombs: <code>A = C ÷ s</code>', '<code>A = ' + fmt(C) + ' ÷ ' + s + ' = ' + fmt(C / s) + ' A</code>'], cite: 'p. 104-4 (A = C/s)', sig: 'QA' + C + '/' + s });
+    }
+    if (m === 'J') {
+      C = pick([2, 5, 10, 20, 50, 100]); V = pick([1.5, 6, 9, 12, 24, 120]);
+      return calc({ obj: '104.1', topic: 'Joules', ans: C * V, unit: 'J', count: 4,
+        stem: 'When ' + fmt(C) + ' coulombs of electrons pass through a potential difference of ' + fmt(V) + ' volts, how many joules of energy are used?',
+        cands: [{ v: C / V, why: 'Multiply: J = C × V.' }, { v: V / C, why: 'Multiply: J = C × V.' }, { v: C + V, why: 'Multiply, don’t add: J = C × V.' }],
+        steps: ['Joules are coulomb-volts.', '<code>J = C × V = ' + fmt(C) + ' × ' + fmt(V) + ' = ' + fmt(C * V) + ' J</code>'], cite: 'p. 104-4 (J = C × V)', sig: 'J' + C + '/' + V });
+    }
+    if (m === 'Ws') {
+      W = pick([5, 25, 60, 100, 500, 1000, 1500]); s = pick([2, 10, 30, 60, 120]);
+      return calc({ obj: '104.1', topic: 'Joules', ans: W * s, unit: 'J', count: 4,
+        stem: 'A ' + fmt(W) + '-watt load runs for ' + s + ' seconds. How many joules of energy does it use?',
+        cands: [{ v: W / s, why: 'Multiply: J = W × s.' }, { v: s / W, why: 'Multiply: J = W × s.' }, { v: W * s / 60, why: 'The time is already in seconds. Don’t divide by 60.' }],
+        steps: ['A watt is one joule per second, so one joule is a watt-second.', '<code>J = W × s = ' + fmt(W) + ' × ' + s + ' = ' + fmt(W * s) + ' J</code>'], cite: 'p. 104-4 (J = W × s)', sig: 'JW' + W + '/' + s });
+    }
+    if (m === 'kWh') {
+      k = pick([0.5, 1, 1.5, 2, 5, 10, 30]);
+      return calc({ obj: '104.1', topic: 'Kilowatt-hours', ans: k * 3600000, unit: 'J', count: 4,
+        stem: 'A residential electric meter shows ' + fmt(k) + ' kWh used. How many joules is that?',
+        cands: [{ v: k * 3600, why: '1 kWh = 3,600,000 J (1,000 W × 3,600 s). You left out the × 1,000.' }, { v: k * 1000, why: '1 kWh = 3,600,000 J, not 1,000 J.' }, { v: k * 60000, why: '1 kWh = 3,600,000 J.' }],
+        steps: ['1 kWh = 3,600,000 J.', '<code>' + fmt(k) + ' × 3,600,000 = ' + fmt(k * 3600000) + ' J</code>'], cite: 'p. 104-4 and 104-5 (1 kWh = 3,600,000 J)', sig: 'KWH' + k });
+    }
+    k = pick([0.5, 2, 5, 10, 25]);
+    var J = k * 3600000;
+    return calc({ obj: '104.1', topic: 'Kilowatt-hours', ans: k, unit: 'kWh', count: 4,
+      stem: 'How many kilowatt-hours is ' + fmt(J) + ' joules?',
+      cands: [{ v: J / 3600, why: 'Divide by 3,600,000, not 3,600.' }, { v: J / 1000, why: 'Divide by 3,600,000.' }, { v: J / 360000, why: 'Count the zeros: 1 kWh = 3,600,000 J.' }],
+      steps: ['1 kWh = 3,600,000 J, so divide joules by 3,600,000.', '<code>' + fmt(J) + ' ÷ 3,600,000 = ' + fmt(k) + ' kWh</code>'], cite: 'p. 104-4 and 104-5', sig: 'JK' + k });
+  }
+
+  // ---------- 104.4: rated vs applied voltage ----------
+  function tApplied() {
+    if (Math.random() < 0.3) return tAppliedAmp();
+    var L = wattLoad(false), Er = L.E, P = L.P, Ea = pick(EA[Er]);
+    var R = Er * Er / P, Ia = Ea / R, Pa = Ea * Ea / R, Ir = P / Er, bat = Er === 12, dev = L.n, A = art(dev);
+    var kw = P >= 1000 && Math.random() < 0.4, up = Ea > Er;
+    var plate = { name: bat ? 'Lamp · 12 VDC' : dev, rate: [pw(P, kw), fmt(Er) + ' V'] };
+    var given = [[bat ? 'Battery' : 'Applied', fmt(Ea) + ' V']];
+    var ask = pick(['I', 'P', 'I', 'P', 'R']);
+    var s1 = 'The nameplate is only accurate at ' + fmt(Er) + ' V (p. 104-18). This ' + dev + ' is running at ' + fmt(Ea) + ' V, so find the fixed resistance first (p. 104-19).';
+    var s0 = kw ? 'Convert: <code>' + fmt(P / 1000) + ' kW × 1,000 = ' + fmt(P) + ' W</code>' : null;
+    var s2 = '<code>R = E<sub>rated</sub>² ÷ P<sub>rated</sub> = ' + fmt(Er) + '² ÷ ' + fmt(P) + ' = ' + fmt(Er * Er) + ' ÷ ' + fmt(P) + ' = ' + fmt(R) + ' Ω</code>';
+    var chk = 'Check: the voltage went ' + (up ? 'up' : 'down') + ', so current and power go ' + (up ? 'up' : 'down') + ' from the rating (rated ' + fmt(Ir) + ' A and ' + fmt(P) + ' W).' + (up ? ' The lesson also says applied voltage should not exceed the rating (p. 104-20).' : '');
+    var intro = bat ? 'A lamp rated ' + fmt(P) + ' W at 12 VDC is connected to a battery putting out ' + fmt(Ea) + ' volts. ' : '';
+    if (ask === 'R') {
+      return calc({ obj: '104.4', topic: 'Fixed resistance from the nameplate', ans: R, unit: 'Ω', plate: plate, given: given,
+        stem: bat ? intro + 'What is the fixed resistance of the lamp?' : A.charAt(0).toUpperCase() + A.slice(1) + ' ' + dev + ' is rated ' + pw(P, kw) + ' at ' + fmt(Er) + ' V and is operated at ' + fmt(Ea) + ' V. What is its fixed (rated) resistance?',
+        cands: [{ v: Ea * Ea / P, why: 'You used the applied voltage. Fixed resistance comes from the nameplate (rated) values: R = E_rated² ÷ P_rated.' },
+          { v: Ir, why: 'P ÷ E is the rated current, not the resistance.' }, { v: Er / P, why: 'Square the voltage: R = E² ÷ P.' }],
+        steps: [s1, s0, s2, 'Fixed resistance doesn’t change with the applied voltage (p. 104-18), so this is the answer at ' + fmt(Ea) + ' V too.'],
+        cite: 'p. 104-18 and 104-19', sig: 'APR' + dev + P + Er + Ea });
+    }
+    if (ask === 'I') {
+      return calc({ obj: '104.4', topic: 'Current at a different voltage', ans: Ia, unit: 'A', plate: plate, given: given,
+        stem: bat ? intro + 'How much current will the circuit draw?' : pick(['What is the current drawn by ' + A + ' ' + dev + ' if the nameplate supplies the following information and it is operated at ' + fmt(Ea) + ' volts?',
+          'The current drawn by ' + A + ' ' + dev + ' is ___ amps when operated at ' + fmt(Ea) + ' volts. The nameplate is shown below.']),
+        cands: [{ v: Ir, why: fmt(Ir) + ' A is the rated current. It’s only true at ' + fmt(Er) + ' V. At ' + fmt(Ea) + ' V, find R first, then I = E ÷ R.' },
+          { v: P / Ea, why: 'You divided the rated watts by the applied volts. The watts change when the voltage changes, so find R first.' },
+          { v: R, why: 'That’s the fixed resistance in ohms. One more step: I = E_applied ÷ R.' },
+          { v: Ir * Er / Ea, why: 'Current moves the same way as voltage (directly proportional, p. 104-18). You moved it the wrong way.' }],
+        steps: [s1, s0, s2, 'Now use the applied voltage: <code>I = E<sub>applied</sub> ÷ R = ' + fmt(Ea) + ' ÷ ' + fmt(R) + ' = ' + fmt(Ia) + ' A</code>', chk],
+        cite: 'p. 104-18 and 104-19', sig: 'API' + dev + P + Er + Ea });
+    }
+    return calc({ obj: '104.4', topic: 'Power at a different voltage', ans: Pa, unit: 'W', plate: plate, given: given,
+      stem: bat ? intro + 'How much power will the lamp produce?' : pick(['What is the power used by ' + A + ' ' + dev + ' if the nameplate supplies the following information and it is operated at ' + fmt(Ea) + ' volts?',
+        'If the voltage supply to this ' + dev + ' changes to ' + fmt(Ea) + ' volts, the ' + dev + ' could deliver ___ watts.']),
+      cands: [{ v: P, why: 'That’s the nameplate rating. It’s accurate ONLY at the rated voltage (p. 104-18).' },
+        { v: P * Ea / Er, why: 'You scaled the watts by the voltage ratio once. Power uses E², so find R and use P = E² ÷ R.' },
+        { v: P * (Er / Ea) * (Er / Ea), why: 'The ratio is upside down. Lower voltage has to mean lower power.' },
+        { v: Ea * Ir, why: 'You used the rated current with the applied voltage. The current changes too, so find R first.' }],
+      steps: [s1, s0, s2, 'Now use the applied voltage: <code>P = E<sub>applied</sub>² ÷ R = ' + fmt(Ea) + '² ÷ ' + fmt(R) + ' = ' + fmt(Ea * Ea) + ' ÷ ' + fmt(R) + ' = ' + fmt(Pa) + ' W</code>', chk],
+      cite: 'p. 104-18 and 104-19', sig: 'APP' + dev + P + Er + Ea });
+  }
+  function tAppliedAmp() {
+    var L = ampLoad(), Er = L.E, Ir = L.I, Ea = pick(EA[Er]);
+    var R = Er / Ir, Ia = Ea / R, Pa = Ea * Ea / R, Pr = Er * Ir, A = art(L.n), up = Ea > Er;
+    var plate = { name: L.n, rate: [fmt(Ir) + ' A', fmt(Er) + ' V'] }, given = [['Applied', fmt(Ea) + ' V']];
+    var s1 = 'The nameplate is only accurate at ' + fmt(Er) + ' V (p. 104-18). It’s running at ' + fmt(Ea) + ' V, so find the fixed resistance first (p. 104-19).';
+    var s2 = '<code>R = E<sub>rated</sub> ÷ I<sub>rated</sub> = ' + fmt(Er) + ' ÷ ' + fmt(Ir) + ' = ' + fmt(R) + ' Ω</code>';
+    var chk = 'Check: the voltage went ' + (up ? 'up' : 'down') + ', so the current went ' + (up ? 'up' : 'down') + ' from ' + fmt(Ir) + ' A.';
+    var ask = pick(['R', 'I', 'I', 'P']);
+    if (ask === 'R') {
+      return calc({ obj: '104.4', topic: 'Fixed resistance from the nameplate', ans: R, unit: 'Ω', plate: plate, given: given,
+        stem: 'What is the fixed resistance of ' + A + ' ' + L.n + ' with the nameplate below? It is operated at ' + fmt(Ea) + ' volts.',
+        cands: [{ v: Ea / Ir, why: 'Use the rated voltage for fixed resistance: R = E_rated ÷ I_rated.' }, { v: Ir / Er, why: 'Upside down. R = E ÷ I.' }, { v: Pr, why: 'E × I is the rated power in watts.' }],
+        steps: [s1, s2, 'Fixed resistance doesn’t change with the applied voltage (p. 104-18).'], cite: 'p. 104-18 and 104-19', sig: 'AAR' + L.n + Ir + Er + Ea });
+    }
+    if (ask === 'I') {
+      return calc({ obj: '104.4', topic: 'Current at a different voltage', ans: Ia, unit: 'A', plate: plate, given: given,
+        stem: 'What is the current drawn by ' + A + ' ' + L.n + ' if the nameplate supplies the following information and it is operated at ' + fmt(Ea) + ' volts?',
+        cands: [{ v: Ir, why: 'The nameplate amps are only true at the rated voltage (p. 104-18).' },
+          { v: R, why: 'That’s the resistance in ohms. One more step: I = E_applied ÷ R. (8.3333 on 104.4 Worksheet #8 is this trap.)' },
+          { v: Ir * Er / Ea, why: 'Current moves the same way as voltage. You moved it the wrong way.' }],
+        steps: [s1, s2, '<code>I = E<sub>applied</sub> ÷ R = ' + fmt(Ea) + ' ÷ ' + fmt(R) + ' = ' + fmt(Ia) + ' A</code>', chk], cite: 'p. 104-18 and 104-19', sig: 'AAI' + L.n + Ir + Er + Ea });
+    }
+    return calc({ obj: '104.4', topic: 'Power at a different voltage', ans: Pa, unit: 'W', plate: plate, given: given,
+      stem: 'How much power does ' + A + ' ' + L.n + ' use when operated at ' + fmt(Ea) + ' volts? The nameplate is shown below.',
+      cands: [{ v: Pr, why: 'E_rated × I_rated is the rated power. It’s only true at the rated voltage.' },
+        { v: Ea * Ir, why: 'You used the rated amps at the applied voltage. The current changes too, so find R first.' },
+        { v: Pr * Ea / Er, why: 'Power changes with E², not E. Find R, then P = E² ÷ R.' }],
+      steps: [s1, s2, '<code>P = E<sub>applied</sub>² ÷ R = ' + fmt(Ea) + '² ÷ ' + fmt(R) + ' = ' + fmt(Ea * Ea) + ' ÷ ' + fmt(R) + ' = ' + fmt(Pa) + ' W</code>', 'Same answer another way: <code>I = ' + fmt(Ia) + ' A</code>, then <code>P = I × E = ' + fmt(Ia) + ' × ' + fmt(Ea) + ' = ' + fmt(Pa) + ' W</code>.'],
+      cite: 'p. 104-18 and 104-19', sig: 'AAP' + L.n + Ir + Er + Ea });
+  }
+  function tChange() {
+    var E = pick([12, 24, 60, 100, 120, 240]), R = pick([4, 5, 6, 8, 10, 12, 20, 24, 40, 60]), I = E / R, P = E * E / R;
+    var mode = pick(['V2', 'R2', 'Vh', 'P2']);
+    var base = fmt(E) + ' volts are applied to a circuit that has ' + fmt(R) + ' ohms of resistance. ';
+    if (mode === 'V2') return calc({ obj: '104.4', topic: 'Voltage doubled', ans: 2 * I, unit: 'A', count: 4, given: [['E', fmt(E) + ' V'], ['R', fmt(R) + ' Ω']],
+      stem: base + 'Keeping the same resistance, the voltage is increased to ' + fmt(2 * E) + ' volts. What is the new current?',
+      cands: [{ v: I, why: 'The current changes. It’s directly proportional to voltage.' }, { v: I / 2, why: 'Current goes the same way as voltage. Voltage doubled, so current doubled.' }, { v: 4 * I, why: 'Current doubles with voltage. It doesn’t go up four times (power does).' }],
+      steps: ['Before: <code>I = ' + fmt(E) + ' ÷ ' + fmt(R) + ' = ' + fmt(I) + ' A</code>', 'After: <code>I = ' + fmt(2 * E) + ' ÷ ' + fmt(R) + ' = ' + fmt(2 * I) + ' A</code>', 'Voltage doubled, so current doubled (direct proportionality).'],
+      cite: 'p. 104-19 (Example of Direct Proportionality)', sig: 'CH' + mode + E + R });
+    if (mode === 'R2') return calc({ obj: '104.4', topic: 'Resistance doubled', ans: I / 2, unit: 'A', count: 4, given: [['E', fmt(E) + ' V'], ['R', fmt(R) + ' Ω']],
+      stem: base + 'Keeping the same voltage, the load is changed and the resistance increases to ' + fmt(2 * R) + ' ohms. What is the new current?',
+      cands: [{ v: I, why: 'The current changes. It’s inversely proportional to resistance.' }, { v: 2 * I, why: 'More resistance means less current. Resistance doubled, so current halved.' }, { v: I / 4, why: 'Resistance doubled, so current is cut in half, not to a quarter.' }],
+      steps: ['Before: <code>I = ' + fmt(E) + ' ÷ ' + fmt(R) + ' = ' + fmt(I) + ' A</code>', 'After: <code>I = ' + fmt(E) + ' ÷ ' + fmt(2 * R) + ' = ' + fmt(I / 2) + ' A</code>', 'Resistance doubled, so current halved (inverse proportionality).'],
+      cite: 'p. 104-19 (Example of Inverse Proportionality)', sig: 'CH' + mode + E + R });
+    if (mode === 'Vh') return calc({ obj: '104.4', topic: 'Voltage cut in half', ans: I / 2, unit: 'A', count: 4, given: [['E', fmt(E) + ' V'], ['R', fmt(R) + ' Ω']],
+      stem: base + 'The voltage drops to ' + fmt(E / 2) + ' volts and the resistance stays the same. What is the new current?',
+      cands: [{ v: I, why: 'Lower voltage means lower current.' }, { v: 2 * I, why: 'Current goes the same way as voltage, so it goes down.' }, { v: I / 4, why: 'Current is cut in half with the voltage, not to a quarter.' }],
+      steps: ['Before: <code>I = ' + fmt(E) + ' ÷ ' + fmt(R) + ' = ' + fmt(I) + ' A</code>', 'After: <code>I = ' + fmt(E / 2) + ' ÷ ' + fmt(R) + ' = ' + fmt(I / 2) + ' A</code>', 'Voltage went down, so current went down by the same proportion.'],
+      cite: 'p. 104-18', sig: 'CH' + mode + E + R });
+    return calc({ obj: '104.4', topic: 'Power when voltage doubles', ans: 4 * P, unit: 'W', count: 4, given: [['E', fmt(E) + ' V'], ['R', fmt(R) + ' Ω']],
+      stem: base + 'If the voltage is doubled to ' + fmt(2 * E) + ' volts with the same resistance, how much power is used?',
+      cands: [{ v: P, why: 'Power changes when voltage changes.' }, { v: 2 * P, why: 'Power uses E², so doubling E makes power 4 times, not 2 times.' }, { v: P / 2, why: 'Higher voltage means more power, not less.' }],
+      steps: ['Before: <code>P = E² ÷ R = ' + fmt(E) + '² ÷ ' + fmt(R) + ' = ' + fmt(P) + ' W</code>', 'After: <code>P = ' + fmt(2 * E) + '² ÷ ' + fmt(R) + ' = ' + fmt(4 * P) + ' W</code>', 'E is squared, so 2× the voltage gives 4× the power.'],
+      cite: WHEEL + ' (P = E² ÷ R)', sig: 'CH' + mode + E + R });
+  }
+  function tTol() {
+    var Er = pick([120, 208, 240, 277, 480]), pct = pick([5, 10]), other = 15 - pct, ans = Er * (1 + pct / 100);
+    return calc({ obj: '104.4', topic: 'Voltage tolerance', ans: ans, unit: 'V', count: 4,
+      stem: 'Your lesson says a tolerance of 5% to 10% above the rating is generally acceptable for resistive loads. Using a ' + pct + '% tolerance, what is the highest voltage for a resistive load rated ' + Er + ' V?',
+      cands: [{ v: Er * (1 + other / 100), why: 'That’s a ' + other + '% tolerance.' }, { v: Er * (1 - pct / 100), why: 'The tolerance is above the rating, not below it.' }, { v: Er * (1 + 2 * pct / 100), why: 'That’s ' + (2 * pct) + '%, double the tolerance asked for.' }],
+      steps: ['<code>' + Er + ' × ' + fmt(pct / 100) + ' = ' + fmt(Er * pct / 100) + ' V</code>', '<code>' + Er + ' + ' + fmt(Er * pct / 100) + ' = ' + fmt(ans) + ' V</code>'],
+      cite: 'p. 104-20', sig: 'TOL' + Er + pct });
+  }
+
+  // ---------- concept bank (every item quotes or points to the book) ----------
+  var CONCEPTS = [
+    // 104.1
+    { id: 'matter', o: '104.1', q: ['All matter is composed of ___.', 'According to electron theory, all matter is made up of ___.'], a: 'molecules', d: ['free electrons', 'chemical reactions', 'organic and inorganic matter'], c: 'p. 104-2', x: '“All matter is composed of molecules. Molecules are comprised of different atoms.”' },
+    { id: 'molec', o: '104.1', q: ['Molecules are comprised of different ___.'], a: 'atoms', d: ['coulombs', 'holes', 'joules'], c: 'p. 104-2', x: '“Molecules are comprised of different atoms.”' },
+    { id: 'nucleus', o: '104.1', q: ['The nucleus of an atom is composed of ___.'], a: 'protons and neutrons', d: ['electrons and protons', 'electrons and neutrons', 'free electrons and holes'], c: 'p. 104-2, Fig. 104-1', x: '“Each atom has a nucleus with electrons orbiting it. The nucleus is composed of protons and neutrons.”' },
+    { id: 'eCh', o: '104.1', q: ['Electrons have a ___ charge.', 'What charge does an electron carry?'], a: 'negative (−)', d: ['positive (+)', 'no', 'changing'], c: 'p. 104-2', x: '“The electrons have a negative charge (−), and the protons have a positive charge (+). Neutrons carry no charge.”' },
+    { id: 'pCh', o: '104.1', q: ['Protons have a ___ charge.'], a: 'positive (+)', d: ['negative (−)', 'no', 'changing'], c: 'p. 104-2', x: '“…the protons have a positive charge (+).”' },
+    { id: 'nCh', o: '104.1', q: ['Neutrons carry ___.'], a: 'no charge', d: ['a positive charge', 'a negative charge', 'the current'], c: 'p. 104-2', x: '“Neutrons carry no charge.”' },
+    { id: 'bound', o: '104.1', q: ['Electrons held in their orbit by the equal attraction of the protons are called ___.'], a: 'bound electrons', d: ['free electrons', 'holes', 'static electrons'], c: 'p. 104-2', x: '“…the electrons are held, or bound, in their orbit by this equal attraction. These electrons are referred to as bound electrons.”' },
+    { id: 'free', o: '104.1', q: ['Electrons in the outermost orbit, which are not held as strongly, are called ___.'], a: 'free electrons', d: ['bound electrons', 'neutrons', 'protons'], c: 'p. 104-2', x: '“The electrons traveling around the nucleus in the outermost orbit are not as strongly held… These are called free electrons.”' },
+    { id: 'forces', o: '104.1', q: ['What can force free electrons out of their orbit?'], a: 'Chemical action, friction, or a magnetic field', d: ['Glass, mica, or rubber', 'The neutrons in the nucleus', 'Clean, dry air'], c: 'p. 104-2', x: '“The external force can be due to chemical action, friction, or by a magnetic field.”' },
+    { id: 'hole', o: '104.1', q: ['When a free electron leaves an atom, it leaves behind a ___.'], a: '“hole” or void another free electron can enter', d: ['neutron', 'coulomb', 'new proton'], c: 'p. 104-2, Fig. 104-2', x: '“When a free electron leaves an atom, it leaves behind a “hole” or void into which a free electron, from an adjacent atom, can enter.”' },
+    { id: 'magn', o: '104.1', q: ['___ is the basis of electricity.'], a: 'Magnetism', d: ['Static electricity', 'Friction', 'Resistance'], c: 'p. 104-3', x: '“Magnetism is the basis of electricity.”' },
+    { id: 'repel', o: '104.1', q: ['Two particles that are both positively charged will ___ each other.', 'Two particles that are both negatively charged will ___ each other.'], a: 'repel', d: ['attract', 'neutralize', 'orbit'], c: 'p. 104-3, Fig. 104-3', x: '“Oppositely charged particles attract each other, and particles that have the same charge repel each other.”' },
+    { id: 'attract', o: '104.1', q: ['A positively charged particle and a negatively charged particle will ___ each other.'], a: 'attract', d: ['repel', 'neutralize', 'ignore'], c: 'p. 104-3, Fig. 104-3', x: '“Oppositely charged particles attract each other…” (also “unlikes attract,” p. 104-4)' },
+    { id: 'steel', o: '104.1', q: ['Which material makes a good permanent magnet because it is difficult to magnetize and demagnetize?'], a: 'Hard steel', d: ['Soft iron', 'Copper', 'Aluminum'], c: 'p. 104-3 (Note)', x: '“Hard steel is difficult to magnetize and demagnetize, making it a good permanent magnet. Conversely, soft iron is easily magnetized and demagnetized.”' },
+    { id: 'iron', o: '104.1', q: ['Soft iron is ___.'], a: 'easily magnetized and demagnetized', d: ['a good permanent magnet', 'impossible to magnetize', 'an insulator'], c: 'p. 104-3 (Note)', x: '“…soft iron is easily magnetized and demagnetized.”' },
+    { id: 'current', o: '104.1', q: ['___ is the flow of electrons from one atom to another.'], a: 'Current', d: ['Voltage', 'Resistance', 'Ampacity'], c: 'p. 104-3', x: '“Current is the flow of electrons from one atom to another.”' },
+    { id: 'operate', o: '104.1', q: ['What makes all electrical equipment operate?'], a: 'Current flow', d: ['Static electricity', 'Bound electrons', 'Resistance'], c: 'p. 104-3', x: '“Current flow is what makes all electrical equipment operate.”' },
+    { id: 'intens', o: '104.1', q: ['Current is abbreviated I because the number of electrons moving past a point each second indicates the current ___.'], a: 'intensity', d: ['insulation', 'induction', 'inertia'], c: 'p. 104-3', x: '“The number of electrons moving past a point in a conductor in a second’s time indicates the current INTENSITY. This is why current… is abbreviated as I.”' },
+    { id: 'ammeter', o: '104.1', q: ['Current is measured in amperes using a(n) ___.'], a: 'ammeter', d: ['voltmeter', 'thermocouple', 'surge protector'], c: 'p. 104-3', x: '“Current is measured in amperes using an ammeter. An ampere is abbreviated as A.”' },
+    { id: 'voltmeter', o: '104.1', q: ['Voltage is measured in volts using a(n) ___.'], a: 'voltmeter', d: ['ammeter', 'thermocouple', 'surge protector'], c: 'p. 104-5', x: '“Voltage is measured in volts using a voltmeter.”' },
+    { id: 'oneamp', o: '104.1', q: ['How many electrons must move past a point in one second for 1 amp to flow?'], a: '6.24 × 10¹⁸', d: ['6.24 × 10⁶', '3,600,000', '1,000'], c: 'p. 104-3', x: '“When 6.24 × 10¹⁸ (6,240,000,000,000,000,000) electrons are moving past a point in a conductor in a second’s time, then 1 amp of current is flowing.”' },
+    { id: 'towardPos', o: '104.1', q: ['Electrons are negatively charged, so they flow toward the ___ terminal.'], a: 'positive (+)', d: ['negative (−)', 'nearest', 'largest'], c: 'p. 104-4', x: '“…electrons (e⁻) are negatively charged and will flow toward a positively charged terminal.”' },
+    { id: 'leaveNeg', o: '104.1', q: ['In a battery and lamp circuit, electrons leave the battery from the ___ terminal.'], a: 'negative (−)', d: ['positive (+)', 'lamp', 'middle'], c: 'p. 104-4, Fig. 104-5', x: '“…electrons will leave from the negative battery terminal and travel through the wire, the lamp filament, through the other wire, and back into the battery through the positive terminal.”' },
+    { id: 'potential', o: '104.1', q: ['Electrons will flow between two points whenever there is a ___ between them.'], a: 'difference in potential', d: ['layer of insulation', 'equal charge', 'neutron'], c: 'p. 104-4', x: '“Electrons will flow between two points whenever there is a difference in potential between the two points.”' },
+    { id: 'eflow', o: '104.1', q: ['___ flow equals current flow.'], a: 'Electron', d: ['Neutron', 'Hole', 'Proton'], c: 'p. 104-4', x: '“…whenever there is a difference in potential between the two points. This electron flow is current flow.”' },
+    { id: 'coul', o: '104.1', q: ['A coulomb is a unit of ___.'], a: 'electric charge', d: ['energy', 'power', 'resistance'], c: 'p. 104-4', x: '“A coulomb is a unit of electric charge…”' },
+    { id: 'coulDef', o: '104.1', q: ['One coulomb is the quantity of electricity carried in one second by a current of ___.'], a: 'one ampere', d: ['one volt', 'one ohm', 'one watt'], c: 'p. 104-4', x: '“The coulomb is defined as the quantity of electricity transported in one second (s) by a current of one ampere (A).”' },
+    { id: 'joule', o: '104.1', q: ['When applied to electricity, a ___ is a unit of energy.'], a: 'joule', d: ['watt', 'coulomb', 'ampere'], c: 'p. 104-4', x: '“When applied to electricity, a joule (J) is a unit of energy.”' },
+    { id: 'cv', o: '104.1', q: ['Joules are also called ___.'], a: 'coulomb-volts (CV)', d: ['amp-seconds', 'ohm-amps', 'volt-ohms'], c: 'p. 104-4', x: '“Joules are coulomb-volts (CV).” So J = C × V.' },
+    { id: 'watt', o: '104.1', q: ['A watt (W) equals ___.'], a: 'one joule per second (J/s)', d: ['one coulomb per second', 'one volt per ohm', '3,600,000 joules'], c: 'p. 104-4', x: '“A watt (W) equals one joule of power radiated or dissipated for one second (J/s).”' },
+    { id: 'kwhJ', o: '104.1', q: ['One kilowatt-hour (kWh) equals ___ joules.'], a: '3,600,000', d: ['1,000', '3,600', '60,000'], c: 'p. 104-4', x: '“A kilowatt-hour (kWh), often seen on residential electric meters, is equal to 3,600,000 J.”' },
+    { id: 'kwhMeter', o: '104.1', q: ['Where are kilowatt-hours often seen?'], a: 'On residential electric meters', d: ['On surge protector labels', 'On battery terminals', 'On wire insulation'], c: 'p. 104-4', x: '“A kilowatt-hour (kWh), often seen on residential electric meters…”' },
+    { id: 'surge', o: '104.1', q: ['The joule rating on a surge protector tells you ___.'], a: 'how much energy it can absorb before it fails', d: ['how many amps it can carry', 'its voltage rating', 'how many years it will last'], c: 'p. 104-5', x: '“This joule rating indicates how much energy the surge protector can absorb before it fails. A higher number indicates greater protection.”' },
+    { id: 'surgeHi', o: '104.1', q: ['On a surge protector, a higher joule rating means ___.'], a: 'greater protection', d: ['less protection', 'more resistance', 'a lower voltage'], c: 'p. 104-5', x: '“A higher number indicates greater protection.”' },
+    { id: 'voltage', o: '104.1', q: ['___ is the force that causes current to flow.', 'The force that causes electrons to flow is called electromotive force (emf). What is the most common term for it?'], a: 'Voltage', d: ['Current', 'Power', 'Resistance'], c: 'p. 104-5', x: '“The force required to cause electrons to flow in a circuit is called electromotive force or emf… Voltage is the most common term used to describe this force.”' },
+    { id: 'emf', o: '104.1', q: ['Electromotive force (emf) exists because of ___.'], a: 'the difference in potential between two points', d: ['the number of neutrons', 'static electricity', 'the color of the insulation'], c: 'p. 104-5', x: '“…electromotive force or emf and exists because of the difference in potential between two points.”' },
+    { id: 'EorV', o: '104.1', q: ['Which letters represent voltage in a calculation or formula?'], a: 'E or V', d: ['I or A', 'R or Ω', 'P or W'], c: 'p. 104-5', x: '“Either E or V represents voltage in a calculation or formula.”' },
+    { id: 'pipe', o: '104.1', q: ['In the water-pipe comparison, what happens when the pipe is bigger?'], a: 'More water (current) flows', d: ['Less water flows', 'The pump gets weaker', 'Nothing changes'], c: 'p. 104-5, Fig. 104-6', x: '“The stronger the pump, the more water will flow. The bigger the pipe, the more water will flow. The same is true for electron flow.”' },
+    { id: 'pump', o: '104.1', q: ['In the water-pipe comparison, the pump (the force pushing the water) stands for ___.'], a: 'voltage', d: ['resistance', 'the conductor', 'the coulomb'], c: 'p. 104-5', x: '“A force is required to cause water to flow in the pipe…” and “Voltage is the most common term used to describe this force.”' },
+    { id: 'excess', o: '104.1', q: ['In a storage battery, the excess electrons are on the ___ terminal.'], a: 'negative', d: ['positive', 'center', 'grounded'], c: 'p. 104-5, Fig. 104-7', x: '“…excess electrons on the negative battery terminal are transferred to the positive battery terminal…” Fig. 104-7: positive = shortage, negative = excess.' },
+    { id: 'short', o: '104.1', q: ['On a battery symbol, the shorter line represents the ___ terminal.'], a: 'negative (−)', d: ['positive (+)', 'load', 'fuse'], c: 'p. 104-5, Fig. 104-7', x: '“The terminals of the battery are represented by two lines, with the shorter line representing the negative terminal.”' },
+    { id: 'echem', o: '104.1', q: ['A storage battery makes voltage through a(n) ___ process.'], a: 'electrochemical', d: ['thermoelectric', 'magnetic', 'mechanical'], c: 'p. 104-5', x: '“Storage batteries can be used. This is an electrochemical process…”' },
+    { id: 'thermo', o: '104.1', q: ['A thermocouple makes a small voltage when ___.'], a: 'two dissimilar metals are joined at one end and the junction is heated', d: ['copper wire is wound into a coil', 'wood is soaked in dirty water', 'a generator shaft is turned'], c: 'p. 104-5', x: '“When two dissimilar metals are joined at one end and the junction is heated, a small thermoelectric voltage is generated.”' },
+    { id: 'thermoUse', o: '104.1', q: ['Where are thermocouples used?'], a: 'Natural gas heating units, cooking equipment, and water heaters', d: ['Residential electric meters', 'Lineman’s pliers', 'Transmission line transformers'], c: 'p. 104-5', x: '“Thermocouples are used in natural gas environmental air heating units, cooking equipment, and water heaters.”' },
+    { id: 'pilot', o: '104.1', q: ['On gas equipment with a thermocouple, what happens when the pilot light goes out?'], a: 'The thermocouple stops making voltage and the solenoid valve closes, shutting off the gas', d: ['The thermocouple makes more voltage', 'The solenoid valve opens wider', 'Nothing. The gas keeps flowing'], c: 'p. 104-6', x: '“When heat is removed (pilot light goes out), the thermocouple stops generating voltage. The solenoid valve closes, thus shutting off the gas supply to the equipment.”' },
+    { id: 'limited', o: '104.1', q: ['A thermocouple is a power source of ___.'], a: 'limited capability', d: ['unlimited capability', 'very high voltage', 'alternating current'], c: 'p. 104-5', x: '“Another power source of limited capability is a thermocouple.”' },
+    { id: 'cond', o: '104.1', q: ['A material that consists of molecules that allow many electrons to move freely is called ___.'], a: 'a conductor', d: ['a resistor', 'an insulator', 'a pipe'], c: 'p. 104-6', x: '“A material that consists of molecules that allow many electrons to move freely is called a conductor.”' },
+    { id: 'class', o: '104.1', q: ['Conductors are classified according to ___.'], a: 'the number of electrons allowed to travel freely', d: ['their color', 'their weight', 'the number of neutrons'], c: 'p. 104-6', x: '“Conductors are classified according to the number of electrons allowed to travel freely.”' },
+    { id: 'copper', o: '104.1', q: ['Which conductor is the most commonly used for electrical equipment?'], a: 'Copper', d: ['Gold', 'Platinum', 'Silver'], c: 'p. 104-6', x: '“Copper is the most commonly used among these for electrical equipment because it is relatively inexpensive and also because it has other desirable physical characteristics…”' },
+    { id: 'copperWhy', o: '104.1', q: ['Why is copper the most commonly used conductor?'], a: 'It is relatively inexpensive and has other desirable physical characteristics', d: ['It has zero resistance', 'It is the only metal that conducts', 'It is a good insulator when dry'], c: 'p. 104-6', x: '“…because it is relatively inexpensive and also because it has other desirable physical characteristics that are required for product manufacture and use.”' },
+    { id: 'insul', o: '104.1', q: ['Materials that allow very, very few free electrons are called ___.'], a: 'insulators', d: ['conductors', 'thermocouples', 'windings'], c: 'p. 104-6', x: '“Some materials allow very, very few free electrons… These are called insulators.”' },
+    { id: 'pliers', o: '104.1', q: ['Lineman’s pliers are steel with plastic handle covers. Which part is the insulator?'], a: 'The plastic handle covers', d: ['The steel jaws', 'Both parts', 'Neither part'], c: 'p. 104-6', x: '“…lineman’s pliers are often constructed of steel (a conductor) with plastic (insulator) high dielectric covers on the handles.”' },
+    { id: 'wires', o: '104.1', q: ['Electricians call the cables used to supply power to equipment ___.'], a: '“conductors” or “wires”', d: ['“insulators”', '“windings”', '“busbars”'], c: 'p. 104-6', x: '“Electricians call these “conductors” or “wires.””' },
+    { id: 'wood', o: '104.1', q: ['Clean, dry wood is an insulator. When can it become conductive?'], a: 'When soaked with a somewhat conductive liquid such as dirty water', d: ['When it is painted', 'When it gets cold', 'Never'], c: 'p. 104-7', x: '“Clean and dry wood is an insulator but can become conductive if soaked with a somewhat conductive liquid, such as dirty water.”' },
+    { id: 'plywood', o: '104.1', q: ['Why can plywood be a problem during energized work?'], a: 'The glue may contain conductive materials', d: ['Plywood is a perfect insulator', 'Plywood stores static electricity', 'Plywood is too heavy'], c: 'p. 104-7', x: '“…plywood is made from thin sheets of wood glued together. This glue may contain conductive materials. Insulating mats, made for the purpose, should be used for energized work.”' },
+    { id: 'mats', o: '104.1', q: ['What should be used for energized work?'], a: 'Insulating mats made for the purpose', d: ['Plywood sheets', 'Clean, dry wood', 'A rubber-soled boot as a mat'], c: 'p. 104-7', x: '“Insulating mats, made for the purpose, should be used for energized work.”' },
+    { id: 'boots', o: '104.1', q: ['Why are sweaty, dirty boots NOT good insulators?'], a: 'Sweat is salty and therefore a conductor', d: ['Leather always conducts', 'Rubber soles conduct', 'Dirt is an insulator'], c: 'p. 104-7', x: '“New leather boots with rubber soles are good insulators. But sweaty, dirty boots are NOT good insulators because sweat is salty and therefore a conductor.”' },
+    { id: 'distilled', o: '104.1', q: ['Pure distilled water is ___.'], a: 'a perfect insulator', d: ['an excellent conductor', 'the same as tap water', 'a voltage source'], c: 'p. 104-7', x: '“Pure distilled water is a perfect insulator. However, as chemicals such as chlorine, or salt, or other contaminates such as dirt are added, it becomes more and more conductive.”' },
+    { id: 'water', o: '104.1', q: ['As chlorine, salt, or dirt is added to water, the water becomes ___.'], a: 'more and more conductive', d: ['a better insulator', 'a perfect insulator', 'non-conductive'], c: 'p. 104-7', x: '“…as chemicals such as chlorine, or salt, or other contaminates such as dirt are added, it becomes more and more conductive.”' },
+    { id: 'dust', o: '104.1', q: ['Dust covering insulated wires in a panel ___.'], a: 'can let current flow through the dust particles', d: ['improves the insulation', 'has no effect', 'stops current flow'], c: 'p. 104-7', x: '“The dust covering insulated electrical wires in a panel will allow current to flow through the dust particles… why electrical equipment and conductors must be enclosed and kept free of dust and dirt.”' },
+    { id: 'gloves', o: '104.1', q: ['Before trusting your life to a rubber mat or gloves, you should determine ___.'], a: 'what cleaning solution was used and whether it left a conductive residue', d: ['how old they are', 'what color they are', 'their joule rating'], c: 'p. 104-7', x: '“…determine what cleaning solution was used to clean it. Determine if the cleaning solution is conductive or left a residue that is conductive.”' },
+    { id: 'static', o: '104.1', q: ['Static electricity is defined as ___.'], a: 'a collection of charged particles at rest', d: ['electrons flowing through a conductor', 'the current from a generator', 'the voltage from a thermocouple'], c: 'p. 104-7', x: '“Static electricity is defined as a collection of charged particles at rest (static).”' },
+    { id: 'staticUse', o: '104.1', q: ['To an electrician, static electricity has ___.'], a: 'virtually no practical use', d: ['many practical uses', 'the same uses as AC', 'the same uses as DC'], c: 'p. 104-7', x: '“To an electrician, static electricity has virtually no practical use.”' },
+    { id: 'staticWhere', o: '104.1', q: ['Static charges generally collect on ___ surfaces.'], a: 'insulated', d: ['copper', 'moving', 'wet'], c: 'p. 104-7', x: '“Generally, these charged particles collect on insulated surfaces.”' },
+    { id: 'commonSrc', o: '104.1', q: ['What is the most common source of voltage?'], a: 'A generator (or alternator)', d: ['A battery', 'A thermocouple', 'Static electricity'], c: 'p. 104-8', x: '“Although a battery is considered a voltage source, the most common source of voltage is a generator (or alternator).”' },
+    { id: 'genShaft', o: '104.1', q: ['A generator produces voltage when ___.'], a: 'its center shaft is turned (rotated) by an external force', d: ['its junction is heated', 'a chemical reaction moves electrons', 'it is connected to a battery'], c: 'p. 104-8', x: '“Generators produce voltage when the center shaft is turned (or rotated) by an external force.”' },
+    { id: 'genForce', o: '104.1', q: ['Which of these is NOT listed as an external force that turns a generator?'], a: 'Static electricity', d: ['Wind', 'Hydroelectric (gravity)', 'Internal combustion engines', 'Wave motion (wind and tides)'], c: 'p. 104-8, Fig. 104-9', x: '“External forces include wind; hydroelectric (due to gravity); wave motion (due to wind and tides); and internal combustion engines…”' },
+    { id: 'dc', o: '104.1', q: ['When a voltage source has one + terminal and one − terminal (like a battery or DC power supply), the voltage is ___.'], a: 'constant, and it is called DC (direct current)', d: ['alternating, and it is called AC', 'zero until a load is added', 'always 120 volts'], c: 'p. 104-8', x: '“When the voltage source has two terminals, with one marked + and one marked − (as with a battery or a DC power supply), the voltage is constant… termed DC for direct current.”' },
+    { id: 'ac', o: '104.1', q: ['When the voltage source is a generator or a transformer, the voltage and current are termed ___.'], a: 'AC, for alternating current', d: ['DC, for direct current', 'static electricity', 'emf only'], c: 'p. 104-8', x: '“When the voltage source is a generator or a transformer, the circuit voltage and current are termed AC for alternating current.”' },
+    { id: 'acAbbr', o: '104.1', q: ['AC is an abbreviation for ___.'], a: 'Alternating Current', d: ['Action Calibration', 'Always Charged', 'Amplitude Cancellation'], c: 'p. 104-8', x: '“…termed AC for alternating current.”' },
+    { id: 'tfNeut', o: '104.1', tf: 1, s: ['Neutrons carry a positive charge.'], v: false, c: 'p. 104-2', x: 'False. “Neutrons carry no charge.” Protons are the positive ones.' },
+    { id: 'tfMag', o: '104.1', tf: 1, s: ['Magnetism is the basis of electricity.'], v: true, c: 'p. 104-3', x: 'True. “Magnetism is the basis of electricity.”' },
+    { id: 'tfBoots', o: '104.1', tf: 1, s: ['Leather boots with rubber soles are still good insulators when they are sweaty and dirty.'], v: false, c: 'p. 104-7', x: 'False. Sweat is salty and therefore a conductor.' },
+    { id: 'tfBat', o: '104.1', tf: 1, s: ['A battery is the most common source of voltage.'], v: false, c: 'p. 104-8', x: 'False. “The most common source of voltage is a generator (or alternator).”' },
+    { id: 'tfStatic', o: '104.1', tf: 1, s: ['To an electrician, static electricity has virtually no practical use.'], v: true, c: 'p. 104-7', x: 'True, word for word from p. 104-7.' },
+    // 104.2
+    { id: 'brkOn', o: '104.2', q: ['When a circuit breaker is in the closed (ON) position, it can be considered ___.'], a: 'a conductor with zero resistance', d: ['an insulator with infinite resistance', 'a voltage source', 'a resistive load'], c: 'p. 104-13', x: '“When a circuit breaker, or switch, is in the closed or on position, it can be considered to be a conductor with zero resistance.”' },
+    { id: 'brkOff', o: '104.2', q: ['When a circuit breaker is in the open (OFF) position, it can be considered ___.'], a: 'an insulator (air space) with infinite resistance', d: ['a conductor with zero resistance', 'a voltage source', 'a resistive load'], c: 'p. 104-13', x: '“When a circuit breaker, or switch, is in the open or off position, it can be considered an insulator (air space) with infinite resistance.”' },
+    { id: 'brkCloses', o: '104.2', q: ['When turned ON, a circuit breaker ___ the circuit.'], a: 'closes', d: ['opens'], c: 'p. 104-13', x: '“Circuit breakers are switches that are either off (open) or on (closed).”' },
+    { id: 'brkOpens', o: '104.2', q: ['When turned OFF, a circuit breaker ___ the circuit.'], a: 'opens', d: ['closes'], c: 'p. 104-13', x: '“Circuit breakers are switches that are either off (open) or on (closed).”' },
+    { id: 'air', o: '104.2', q: ['Clean, dry air has a resistance of ___ ohms.'], a: '∞ (infinite)', d: ['0', '1', '1,000'], c: 'p. 104-6 and 104-13', x: 'Air is listed as a good insulator (p. 104-6), and the air space in an open breaker is “an insulator (air space) with infinite resistance” (p. 104-13).' },
+    { id: 'filament', o: '104.2', q: ['A circuit is a car battery, conductors, and a headlamp. If the filament in the headlamp breaks in two, the circuit is ___.'], a: 'incomplete or open', d: ['complete or closed'], c: 'p. 104-13, Fig. 104-17', x: '“Any break in the track (or circuit) stops the flow of cars (or current).”' },
+    { id: 'break', o: '104.2', q: ['In the racetrack example, an open drawbridge stops the cars. What does any break in a circuit do?'], a: 'Stops the flow of current', d: ['Doubles the current', 'Has no effect on the current', 'Raises the voltage'], c: 'p. 104-13, Fig. 104-17', x: '“Any break in the track (or circuit) stops the flow of cars (or current).”' },
+    { id: 'wind', o: '104.2', q: ['Generators and transformers are constructed of coils of wire called ___.'], a: 'windings', d: ['busbars', 'filaments', 'fuses'], c: 'p. 104-13, Fig. 104-15', x: '“Generators and transformers are constructed of coils of wire called “windings.””' },
+    { id: 'genWhere', o: '104.2', q: ['Where is voltage generated in the system shown in Figure 104-14?'], a: 'In the generator windings at the power plant', d: ['In the panelboard busbars', 'In the water heater element', 'In the main breaker'], c: 'p. 104-13', x: '“Voltage is generated in the generator windings at the power plant.”' },
+    { id: 'xUse', o: '104.2', q: ['Transformers are generally used to ___.'], a: 'reduce a high voltage to some useable level', d: ['store electrical energy', 'generate voltage from wind', 'turn AC into DC'], c: 'p. 104-14', x: '“Generally, transformers are used to reduce a high voltage to some useable level.”' },
+    { id: 'primary', o: '104.2', q: ['The high-voltage winding of a transformer is called the ___ winding.'], a: 'primary', d: ['secondary', 'generator', 'busbar'], c: 'p. 104-14', x: '“When current flows through the primary (high-voltage) winding of a transformer, it causes a voltage to appear on the secondary (low-voltage) winding.”' },
+    { id: 'secondary', o: '104.2', q: ['Which transformer winding supplies current for all our needs?'], a: 'The secondary (low-voltage) winding', d: ['The primary (high-voltage) winding', 'The generator winding', 'The main breaker'], c: 'p. 104-14', x: '“The lower-voltage (secondary) winding supplies current for all our needs and is our primary concern.”' },
+    { id: 'twoWind', o: '104.2', q: ['Transformers are built with ___ in one enclosure or housing.'], a: 'two windings', d: ['one winding', 'a battery', 'a fuse and a breaker'], c: 'p. 104-14', x: '“Transformers are built with two windings in one enclosure or housing.”' },
+    { id: 'ourSrc', o: '104.2', q: ['In the lesson’s water heater circuit, what is treated as “our voltage source”?'], a: 'The distribution transformer secondary', d: ['The generator at the power plant', 'The transmission line', 'The 30 A breaker'], c: 'p. 104-14', x: '“We will consider that the distribution transformer secondary voltage is our voltage source.”' },
+    { id: 'volts', o: '104.2', q: ['Which of these is NOT one of the common low voltages listed in your lesson?'], a: '4,160 V', d: ['120 V', '208 V', '277 V', '480 V', '240 V'], c: 'p. 104-14', x: '“…we selected a voltage of 240 volts. This is a common voltage but there are other very common low voltages. These are 120, 208, 277, and 480 volts.” 4,160 V is the higher voltage stepped down in Fig. 104-14.' },
+    { id: 'v4160', o: '104.2', q: ['Figure 104-14 shows a common transformation from 4,160 volts down to ___.'], a: '240 volts', d: ['120 volts', '480 volts', '12 volts'], c: 'p. 104-13, Fig. 104-14', x: 'Fig. 104-14: “TRANSFORMER (TRANSFORMATION OF 4160 VOLTS TO 240 VOLTS IS COMMON).”' },
+    { id: 'path', o: '104.2', q: ['Which is the correct current path for the water heater circuit?'], a: 'Transformer → main breaker → busbars → 30 A breaker → heating element → back to transformer', d: ['Transformer → heating element → busbars → main breaker → 30 A breaker', 'Main breaker → transformer → heating element → busbars → back', 'Busbars → transformer → 30 A breaker → main breaker → heating element'], c: 'p. 104-14, Fig. 104-19', x: '“The current originates in the transformer and then travels through the conductor… and the main breaker. The main breaker is connected to the busbars… through the 30A breaker… through the resistive element in the water heater and makes a return path back to the transformer winding.”' },
+    { id: 'afterMain', o: '104.2', q: ['In the water heater circuit, after current passes through the main breaker, where does it go next?'], a: 'The busbars in the panel', d: ['The water heater element', 'Back to the generator', 'The transmission line'], c: 'p. 104-14', x: '“The main breaker is connected to the busbars in the panel.”' },
+    { id: 'omit', o: '104.2', q: ['Why can circuit breakers be left out of a circuit diagram?'], a: 'When closed, they are conductors with zero resistance', d: ['They have infinite resistance', 'They only work on DC', 'They are part of the transformer'], c: 'p. 104-14 (Note)', x: '“Since our circuit breakers are conductors with zero (no) resistance, when in the closed or on position, we can omit them from our circuit diagram.”' },
+    { id: 'twoPole', o: '104.2', q: ['In Figure 104-20, the 240 V line-to-line heating element is fed from a ___ circuit breaker.'], a: 'two-pole', d: ['one-pole', 'fuse-only', 'main'], c: 'p. 104-15, Fig. 104-20', x: 'Fig. 104-20 labels a “TWO-POLE CIRCUIT BREAKER” feeding “240 V LINE-TO-LINE.”' },
+    { id: 'redraw', o: '104.2', q: ['Circuits are often drawn in different forms that are equal. What does your lesson say you must learn to do?'], a: 'Redraw them into a form you are most comfortable with', d: ['Only use the manufacturer’s drawing', 'Ignore any drawing that looks different', 'Add every breaker to the drawing'], c: 'p. 104-14', x: '“You will see circuits presented or drawn in various forms that are equal. You must learn to redraw these into a form with which you are most comfortable.”' },
+    { id: 'resistive', o: '104.2', q: ['Which of the following is a resistive load?<span class="roman">I. A coffee maker<br>II. An electric oven heating element</span>'], a: 'Both I & II', d: ['I only', 'II only', 'Neither I nor II'], c: '104.2 Worksheet #1 · Figs. 104-19 and 104-20', x: 'Both heat with elements, and the lesson draws heating elements with the resistance symbol (Figs. 104-19, 104-20). The full resistive-load definition is in pages 104-9 to 104-12 (not sent yet).' },
+    { id: 'summer', o: '104.2', q: ['Two circuits use the same size, length, and material of wire. Which has higher resistance in the summer?'], a: 'The circuit run in conduit on the roof of a building', d: ['The circuit run in conduit two feet underground', 'Both are always the same', 'Neither, because heat lowers resistance'], c: '104.2 Worksheet #2 · resistance section p. 104-9+ (not sent yet)', x: 'A hot roof raises the conductor’s temperature, and higher temperature means higher resistance. Confirm in the resistance section that starts on p. 104-9.' },
+    { id: 'small', o: '104.2', q: ['When smaller diameter wire is used for a circuit, the total circuit resistance ___.'], a: 'increases', d: ['stays the same', 'decreases', 'doubles'], c: 'p. 104-5 · Reading Worksheet #1', x: '“The bigger the pipe, the more water will flow. The same is true for electron flow.” (p. 104-5). A smaller wire lets less current through, so resistance goes up.' },
+    { id: 'big', o: '104.2', q: ['The blueprints call for 10 AWG wire (.116" diameter), but you run 8 AWG wire (.128" diameter). You have ___ the total circuit resistance.'], a: 'decreased', d: ['increased', 'not changed'], c: 'p. 104-5 · 104.2 Worksheet #3', x: 'A bigger diameter is a bigger “pipe” with more flow, so resistance goes down. Note the smaller AWG number is the bigger wire.' },
+    { id: 'oppos', o: '104.2', q: ['___ is the total opposition to current flow in a circuit.'], a: 'Resistance', d: ['Insulation', 'Power', 'Voltage'], c: 'Reading Worksheet #6 · resistance section p. 104-9 (not sent yet)', x: 'Resistance opposes current. An open breaker has “infinite resistance” and “does not allow current to flow” (p. 104-13).' },
+    { id: 'dbl', o: '104.2', q: ['A load is rated to use 2.2 kW at 240 V. If two of these loads are connected to the same circuit, the total circuit current is ___ that of one load.'], a: 'double', d: ['one-quarter', 'four times', 'half'], c: WHEEL + ' · 104.2 Worksheet #6', x: 'One load: 2,200 ÷ 240 = 9.1667 A. Two loads: 18.3333 A, which is double.' },
+    { id: 'tfOff', o: '104.2', tf: 1, s: ['When a circuit breaker is OFF (open), it allows current to flow.'], v: false, c: 'p. 104-13', x: 'False. “When off, the circuit breaker does not allow current to flow because the circuit has been opened.”' },
+    { id: 'tfX', o: '104.2', tf: 1, s: ['Transformers are generally used to reduce a high voltage to some useable level.'], v: true, c: 'p. 104-14', x: 'True, word for word from p. 104-14.' },
+    { id: 'tfOmit', o: '104.2', tf: 1, s: ['Closed circuit breakers can be left off a circuit diagram because they have zero resistance.'], v: true, c: 'p. 104-14 (Note)', x: 'True. Closed breakers are conductors with zero resistance.' },
+    // 104.3
+    { id: 'ohm', o: '104.3', q: ['Who developed Ohm’s Law in 1827?'], a: 'Georg Simon Ohm', d: ['Michael Faraday', 'Gustav Kirchhoff', 'James Watt'], c: 'p. 104-16', x: '“Georg Simon Ohm developed Ohm’s Law in 1827.”' },
+    { id: 'y1827', o: '104.3', q: ['Georg Simon Ohm developed Ohm’s Law in ___.'], a: '1827', d: ['1727', '1882', '1927'], c: 'p. 104-16', x: '“Georg Simon Ohm developed Ohm’s Law in 1827.”' },
+    { id: 'ohmSt', o: '104.3', q: ['Ohm’s Law states that 1 volt of electrical pressure will force ___.'], a: '1 ampere of current to flow through 1 ohm of resistance', d: ['1 ohm of resistance through 1 ampere', '1 watt through 1 ohm', '1 coulomb through 1 joule'], c: 'p. 104-16', x: '“Ohm’s Law states that 1 volt of electrical pressure will force 1 ampere of current to flow through 1 ohm of resistance.”' },
+    { id: 'ohmRel', o: '104.3', q: ['___ shows the relationship between current, voltage, and resistance.'], a: 'Ohm’s Law', d: ['Kirchhoff’s Law', 'Faraday’s Law of Induction', 'Watt’s Law'], c: 'p. 104-16', x: '“This is the law of relationships between current (I), voltage (E), and resistance (R).”' },
+    { id: 'Rsym', o: '104.3', q: ['The abbreviation or symbol used to represent resistance in a formula is ___.'], a: 'R', d: ['Ω', 'E', 'V', 'A'], keep: ['Ω'], c: 'p. 104-16, Fig. 104-21', x: 'Formulas are written I = E ÷ R, E = I × R and R = E ÷ I, and Fig. 104-21 labels “R = RESISTANCE (IN Ω).” R is the letter in the formula. Ω is the unit.' },
+    { id: 'Rmean', o: '104.3', q: ['In the formula I = E ÷ R, the R stands for ___.'], a: 'resistance, measured in ohms (Ω)', d: ['ratio, measured in amperes', 'rated power, measured in watts', 'resistance, measured in volts'], c: 'p. 104-16, Fig. 104-21', x: 'Fig. 104-21: “R = RESISTANCE (IN Ω).”' },
+    { id: 'ohms', o: '104.3', q: ['Resistance is always expressed in ___.'], a: 'ohms', d: ['amperes', 'volts', 'watts'], c: 'p. 104-16', x: '“Resistance is always expressed in ohms.”' },
+    { id: 'amps', o: '104.3', q: ['Current is always expressed in ___.'], a: 'amperes', d: ['volts', 'ohms', 'watts'], c: 'p. 104-16', x: '“Current is always expressed in amperes.”' },
+    { id: 'ampsR', o: '104.3', q: ['___ is always expressed in amperes.'], a: 'Current', d: ['Resistance', 'Voltage', 'Power'], c: 'p. 104-16', x: '“Current is always expressed in amperes.”' },
+    { id: 'voltsU', o: '104.3', q: ['Voltage is always expressed in ___.'], a: 'volts', d: ['amperes', 'ohms', 'joules'], c: 'p. 104-16', x: '“Voltage is always expressed in volts.”' },
+    { id: 'Elet', o: '104.3', q: ['In Ohm’s Law, the letter E stands for ___.'], a: 'voltage', d: ['energy', 'electrons', 'resistance'], c: 'p. 104-16 and 104-5', x: '“…current (I), voltage (E), and resistance (R).” Also “Either E or V represents voltage in a calculation or formula” (p. 104-5).' },
+    { id: 'Ilet', o: '104.3', q: ['In Ohm’s Law, the letter I stands for ___.'], a: 'current', d: ['voltage', 'insulation', 'power'], c: 'p. 104-16 and 104-3', x: '“So, I = current.” (p. 104-3)' },
+    { id: 'Plet', o: '104.3', q: ['In the power formula, P stands for ___.'], a: 'power, measured in watts (W)', d: ['pressure, measured in volts (V)', 'potential, measured in ohms (Ω)', 'protons, measured in amperes (A)'], c: 'p. 104-17, Fig. 104-26', x: 'P = I × E is the basic power formula. The wheel shows WATTS (W) in the P corner.' },
+    { id: 'tri', o: '104.3', q: ['How do you use the Ohm’s Law triangle?'], a: 'Cover the value you want, and the remaining letters make the formula', d: ['Cover the two values you already know', 'Multiply all three letters together', 'Add the top letter to the bottom letters'], c: 'p. 104-16', x: '“To use the triangle, cover the value you want to calculate. The remaining letters make up the formula.”' },
+    { id: 'correct', o: '104.3', q: ['Ohm’s Law can only give the correct answer when ___.'], a: 'the correct values are used', d: ['the circuit is DC', 'the breaker is open', 'the triangle is upside down'], c: 'p. 104-16', x: '“Ohm’s Law can only give the correct answer when the correct values are used.”' },
+    { id: 'pf', o: '104.3', q: ['What is the basic power formula?'], a: 'P = I × E', d: ['P = E ÷ I', 'P = I ÷ E', 'P = E × R'], c: 'p. 104-17', x: '“…the basic power formula must be introduced and appears as follows. P = I × E.”' },
+    { id: 'basic', o: '104.3', q: ['All the other Ohm’s Law and power formulas are derived from which two basic formulas?'], a: 'I = E ÷ R and P = I × E', d: ['E = I × R and R = E ÷ I', 'P = E² ÷ R and I = √(P ÷ R)', 'R = P ÷ I² and E = P ÷ I'], c: 'p. 104-17', x: '“The basic formulas are I = E ÷ R and P = I × E. All other formulas are algebraically derived from these.”' },
+    { id: 'two', o: '104.3', q: ['With the Ohm’s Law wheel, if any ___ circuit quantities are known, another can be calculated.'], a: 'two', d: ['three', 'four', 'one'], c: 'p. 104-17', x: '“…if any TWO circuit quantities are known then a THIRD quantity can be calculated using the formulas.”' },
+    { id: 'uom', o: '104.3', q: ['On the Ohm’s Law wheel, where are the units of measurement (UOM) shown?'], a: 'In the corners', d: ['In the center', 'Only in the outer ring', 'They are not shown'], c: 'p. 104-17, Fig. 104-26', x: '“Note that the UOM (units of measurement) are shown in the corners of this “wheel.””' },
+    { id: 'v2000', o: '104.3', q: ['In Example 2 (an ammeter reads 200 mA and R is 10 Ω), what wrong answer do you get if you use 200 instead of .2?'], a: '2,000 volts', d: ['2 volts', '20 volts', '200 volts'], c: 'p. 104-17', x: '“In Example 2, had 200 been used instead of converting the value to .2, the wrong answer of 2000 volts would have been calculated.” The right answer is .2 × 10 = 2 V.' },
+    { id: 'noGiven', o: '104.3', q: ['In electrical work, resistive loads usually ___.'], a: 'do NOT have a given value of resistance, so you derive it from the ratings', d: ['have their resistance printed on them', 'have zero resistance', 'only run on DC'], c: 'p. 104-17', x: '“…we are required to work with resistive loads that DO NOT have a given value of resistance. Instead, our equipment has manufacturer-supplied information, or ratings, from which we are required to derive a value of resistance.”' },
+    { id: 'hot', o: '104.3', q: ['Resistance derived from manufacturer ratings is called ___ resistance.'], a: 'fixed (“hot” or operating)', d: ['cold', 'static', 'variable'], c: 'p. 104-17', x: '“This is fixed (“hot” or operating) resistance.”' },
+    { id: 'direct', o: '104.3', q: ['The formula I = E ÷ R shows that current is ___ proportional to voltage.'], a: 'directly', d: ['inversely', 'not', 'equally'], c: 'p. 104-18', x: '“The formula I = E ÷ R shows that current is directly proportional to voltage.”' },
+    { id: 'inverse', o: '104.3', q: ['Referring to I = E ÷ R: in a DC circuit, current is directly proportional to the voltage and ___ proportional to the resistance.'], a: 'inversely', d: ['conversely', 'directly', 'equally'], c: 'p. 104-19', x: '“Current is also inversely proportional to resistance (when voltage remains constant).”' },
+    { id: 'wireR', o: '104.3', q: ['When is the resistance of the wire generally considered?'], a: 'Only for circuits that have an excessive length', d: ['For every circuit', 'Only for 120 V circuits', 'Only when a two-pole breaker is used'], c: 'p. 104-19', x: '“Wire resistance is generally considered only for circuits that have an excessive length.”' },
+    { id: 'tfRamp', o: '104.3', tf: 1, s: ['Resistance is always expressed in amperes.'], v: false, c: 'p. 104-16', x: 'False. Resistance is always expressed in ohms. Current is in amperes.' },
+    { id: 'tfCorr', o: '104.3', tf: 1, s: ['Ohm’s Law can only give the correct answer when the correct values are used.'], v: true, c: 'p. 104-16', x: 'True, word for word from p. 104-16.' },
+    // 104.4
+    { id: 'fixed', o: '104.4', q: ['Fixed resistance is determined from nameplate information and ___, regardless of applied operating voltage.'], a: 'does not change', d: ['varies slightly', 'doubles', 'drops to zero'], c: 'p. 104-18', x: '“Fixed resistance is determined from nameplate information and this resistance doesn’t change, regardless of applied or operating voltage.”' },
+    { id: 'ratedOnly', o: '104.4', q: ['Equipment ratings (power or current along with rated voltage) are accurate ONLY when ___.'], a: 'the equipment is operated at the manufacturer’s rated voltage', d: ['the equipment is brand new', 'the breaker is OFF', 'the wire is copper'], c: 'p. 104-18', x: '“…our equipment ratings (generally power or current along with rated voltage) are accurate ONLY when the equipment is operated at the manufacturer’s RATED voltage.”' },
+    { id: 'lessR', o: '104.4', q: ['When the supply voltage is less than the rated voltage, the output (power) is ___.'], a: 'less than rated', d: ['more than rated', 'exactly rated', 'zero'], c: 'p. 104-18', x: '“When the supply voltage is less than rated voltage, then the output (power) is less than rated.”' },
+    { id: 'lamp10', o: '104.4', q: ['A weak car battery is putting out only 10 volts. Compared with 13 volts from the alternator, the headlamps will be ___.'], a: 'dimmer', d: ['brighter', 'exactly the same', 'off'], c: 'p. 104-18', x: '“…if a car battery is weak and putting out only 10 volts, then the light produced by the headlamps is dimmer than it would be if the car’s alternator was operating and supplying 13 volts…”' },
+    { id: 'first', o: '104.4', q: ['When the applied voltage is different from the rating, what should you ALWAYS find first?'], a: 'The fixed (rated) resistance', d: ['The rated current', 'The power at the applied voltage', 'The wire size'], c: 'p. 104-19', x: '“ALWAYS, ALWAYS, ALWAYS find the fixed (or rated) resistance before anything else. This is generally the key to finding all other values.”' },
+    { id: 'dec', o: '104.4', q: ['In your calculations, do not round off to fewer than ___ decimal places.'], a: 'four', d: ['two', 'one', 'eight'], c: 'p. 104-20', x: '“In your calculations, do not round off to fewer than four decimal places. Use six places if you like but do not use fewer than four.”' },
+    { id: 'whyDiff', o: '104.4', q: ['In the 25 W, 12 V lamp example, why did the power formulas give slightly different answers?'], a: 'The current was rounded off', d: ['The resistance changed with voltage', 'The battery voltage changed', 'One of the formulas is wrong'], c: 'p. 104-20', x: '“It is because we “rounded off” our answer for current. Had we used 2.2569444, our answers would have been consistently 29.340278…”' },
+    { id: 'exceed', o: '104.4', q: ['Voltage applied to equipment should ___ the manufacturer’s rating.'], a: 'not exceed', d: ['always exceed', 'be double', 'be exactly half of'], c: 'p. 104-20', x: '“Note that voltage applied to equipment should not exceed the manufacturer’s rating.”' },
+    { id: 'tol', o: '104.4', q: ['For resistive loads, what tolerance above the rating is generally acceptable to the manufacturer?'], a: '5% to 10%', d: ['20% to 30%', '50%', 'None at all'], c: 'p. 104-20', x: '“For resistive loads, a tolerance of 5% to 10% above the rating is generally acceptable to the manufacturer.”' },
+    { id: 'v13', o: '104.4', q: ['A lamp rated 25 W at 12 V is connected to a battery putting out 13 V. The lamp will produce ___.'], a: 'more than 25 W (about 29.34 W)', d: ['exactly 25 W', 'less than 25 W', '0 W'], c: 'p. 104-19', x: 'R = 12² ÷ 25 = 5.76 Ω, I = 13 ÷ 5.76 = 2.2569 A, P = 29.34 W. Higher voltage gives more power than rated.' },
+    { id: 'lowerI', o: '104.4', q: ['If the voltage is lowered in a simple circuit, what will the current do?'], a: 'Go down', d: ['Remain the same', 'Go up', 'Fluctuate'], c: 'p. 104-18', x: '“…if the voltage is increased (or decreased), the current will increase (or decrease) proportionally.”' },
+    { id: 'raiseI', o: '104.4', q: ['If the voltage applied to a heater is raised and its resistance stays fixed, the current will ___.'], a: 'go up', d: ['go down', 'stay the same', 'drop to zero'], c: 'p. 104-18', x: '“…if the voltage is increased (or decreased), the current will increase (or decrease) proportionally.”' },
+    { id: 'dV', o: '104.4', q: ['Keeping the same resistance, the voltage is doubled. The current ___.'], a: 'doubles', d: ['is cut in half', 'stays the same', 'goes up four times'], c: 'p. 104-19 (Direct Proportionality)', x: 'Book example: 10 V ÷ 5 Ω = 2 A, then 20 V ÷ 5 Ω = 4 A. “…voltage doubled, so current doubled.”' },
+    { id: 'dR', o: '104.4', q: ['Keeping the same voltage, the resistance is doubled. The current ___.'], a: 'is cut in half', d: ['doubles', 'stays the same', 'goes up four times'], c: 'p. 104-19 (Inverse Proportionality)', x: 'Book example: 10 V ÷ 5 Ω = 2 A, then 10 V ÷ 10 Ω = 1 A. “…resistance doubled so current halved.”' },
+    { id: 'tfFix', o: '104.4', tf: 1, s: ['Fixed resistance changes when the applied voltage changes.'], v: false, c: 'p. 104-18', x: 'False. Fixed resistance “doesn’t change, regardless of applied or operating voltage.”' },
+    { id: 'tfEx', o: '104.4', tf: 1, s: ['Voltage applied to equipment should not exceed the manufacturer’s rating.'], v: true, c: 'p. 104-20', x: 'True, word for word from p. 104-20.' },
+    { id: 'tfAny', o: '104.4', tf: 1, s: ['A nameplate wattage rating is accurate at any applied voltage.'], v: false, c: 'p. 104-18', x: 'False. Ratings are accurate ONLY at the manufacturer’s rated voltage.' },
+    // Safety
+    { id: 's1', o: 'S', q: ['Ideally, when backing, you should use a ___.'], a: 'spotter', d: ['blinker', 'cone', 'horn'], c: 'p. 104-21', x: '“Whenever possible, use a spotter.”' },
+    { id: 's2', o: 'S', tf: 1, s: ['A trailer parked at a dock should have its wheels chocked.'], v: true, c: 'p. 104-21', x: 'True. “If you leave your trailer at the dock, be sure to chock its wheels.”' },
+    { id: 's3', o: 'S', q: ['Before backing up a vehicle, a driver should ___.'], a: 'walk around and scope out the area', d: ['adjust the seat', 'take a coffee break', 'None of these'], c: 'p. 104-21', x: '“Walk around the area where you plan to park your rig and scope out the situation before you start.”' },
+    { id: 's4', o: 'S', tf: 1, s: ['It is best to have a spotter on hand when backing a truck.'], v: true, c: 'p. 104-21', x: 'True. “It’s best to have a spotter outside the truck.”' },
+    { id: 's5', o: 'S', q: ['If no spotter is available, what should you do?'], a: 'Be your own spotter: get out and check clearance at the back, both sides, and the top', d: ['Back up quickly to get it over with', 'Rely only on your mirrors', 'Honk and keep backing'], c: 'p. 104-21', x: '“If not, you have to be your own spotter. It means getting out of the truck to make sure you know how much clearance you have at all points: in the back, on both sides, and on top.”' },
+    { id: 's6', o: 'S', q: ['You should get out and check clearances again at least once after you have backed ___ into the space.'], a: 'more than halfway', d: ['a quarter of the way', 'all the way', 'one foot'], c: 'p. 104-21', x: '“Then check them again by getting out of the truck at least once after you have backed more than halfway into the parking space.”' },
+    { id: 's7', o: 'S', q: ['Back from the ___ side if you can. It’s your “seeing side.”'], a: 'left', d: ['right', 'rear', 'blind'], c: 'p. 104-21', x: '“Back from the left side if you can. That’s your “seeing side.””' },
+    { id: 's8', o: 'S', q: ['Compared with a car, a truck has about ___ times as many blind spots.'], a: '10', d: ['2', '5', '100'], c: 'p. 104-21', x: '“…a machine that’s far more unwieldy than a car and has 10 times as many blind spots.”' },
+    { id: 's9', o: 'S', q: ['If backing isn’t going right, you should ___.'], a: 'pull forward, take another look, then try again', d: ['keep going and fix it at the end', 'speed up to finish', 'turn the wheel harder'], c: 'p. 104-21', x: '“Creep into place. If it’s not going right, pull forward and take another look, then try again.”' },
+    { id: 's10', o: 'S', q: ['With a straight truck, you turn the wheel ___.'], a: 'in the direction you want the rear to go', d: ['opposite the direction you want the rear to go', 'only after backing halfway', 'as far as it will go'], c: 'p. 104-21', x: '“With a straight truck, you turn the wheel in the direction you want the rear to go.”' },
+    { id: 's11', o: 'S', q: ['With a combination rig, you first turn the front ___.'], a: 'in the opposite direction of where you want the rear end to go (the “S” curve)', d: ['in the same direction you want the rear to go', 'straight, and never turn it', 'toward traffic'], c: 'p. 104-21', x: '“The tractor has to follow an S curve. First you turn the front in the opposite direction of where you want the rear end to go.”' },
+    { id: 's12', o: 'S', q: ['When backing, you should back ___ traffic.'], a: 'out of traffic, not into it', d: ['into traffic, not out of it', 'across traffic', 'toward oncoming traffic'], c: 'p. 104-21', x: '“Back out of traffic, not into it.”' },
+    { id: 's13', o: 'S', q: ['Some people say the best advice about backing up is ___.'], a: 'to avoid doing it whenever you can', d: ['to do it as fast as possible', 'to only do it at night', 'to do it without mirrors'], c: 'p. 104-21', x: '“Some people say the best advice about backing up is to avoid doing it whenever you can.”' },
+    { id: 's14', o: 'S', q: ['Make absolutely sure you have clearance for the ___ of your rig, and watch for overhangs.'], a: 'top', d: ['tires', 'cab door', 'mud flaps'], c: 'p. 104-21', x: '“Make absolutely sure you’ve got clearance for the top of your rig. Watch for overhangs that might be in its way.”' },
+    { id: 's15', o: 'S', q: ['Plan your backing maneuver so that you ___.'], a: 'interfere with traffic as little as possible', d: ['block traffic until you are done', 'back into traffic', 'never need a spotter'], c: 'p. 104-21', x: '“Plan your maneuver so you’ll interfere with traffic as little as possible.”' },
+    { id: 's16', o: 'S', q: ['When backing, you should go slowly and ___ into place.'], a: 'creep', d: ['coast', 'race', 'slide'], c: 'p. 104-21', x: '“Go Slowly. Creep into place.”' },
+    { id: 's17', o: 'S', tf: 1, s: ['With a combination rig, you first turn the front the same way you want the rear to go.'], v: false, c: 'p. 104-21', x: 'False. You first turn the front in the opposite direction (the S curve).' },
+    { id: 's18', o: 'S', tf: 1, s: ['You should be aware of all hazards and obstacles, including people who may walk through the area.'], v: true, c: 'p. 104-21', x: 'True, word for word from p. 104-21.' }
+  ];
+
+  var decks = {};
+  function conceptQ(it) {
+    var stems = it.tf ? it.s : it.q, si = ri(stems.length);
+    var choices = it.tf ? [{ text: 'True', ok: it.v === true }, { text: 'False', ok: it.v === false }] : textChoices(it.a, it.d, it.n || 4, it.keep);
+    return { obj: it.o, topic: it.tf ? 'True or false' : OBJ[it.o].name, stem: stems[si], choices: choices,
+      steps: [it.x], cite: it.c, sig: 'c:' + it.id };
+  }
+  function conceptGen(o) {
+    return function () {
+      if (!decks[o] || !decks[o].length) decks[o] = shuffle(CONCEPTS.filter(function (c) { return c.o === o; }));
+      return conceptQ(decks[o].pop());
+    };
+  }
+
+  var GENS = {
+    '104.1': [[6, conceptGen('104.1')], [1.4, tConvert], [1.4, tCharge], [1.2, tMaterials]],
+    '104.2': [[5, conceptGen('104.2')], [2, tSymbol], [1.2, tMultiLoad], [1, tWire]],
+    '104.3': [[1.2, tI_ER], [1.2, tE_IR], [1.2, tR_EI], [1.4, tI_PE], [1, tP_IE], [0.9, tP_ER], [0.8, tP_IR], [1.3, tR_PE], [1.3, tI_PR], [0.7, tE_PI], [0.7, tE_PR], [0.7, tR_PI], [2.4, conceptGen('104.3')]],
+    '104.4': [[6, tApplied], [1.5, tChange], [0.8, tTol], [2.2, conceptGen('104.4')]],
+    'S': [[1, conceptGen('S')]]
+  };
+  var BASE = { '104.1': 1, '104.2': 0.8, '104.3': 1.5, '104.4': 1.4, 'S': 0.45 };
+  function wpick(list) {
+    var tot = 0, i;
+    for (i = 0; i < list.length; i++) tot += list[i][0];
+    var r = Math.random() * tot;
+    for (i = 0; i < list.length; i++) { r -= list[i][0]; if (r < 0) return list[i][1]; }
+    return list[list.length - 1][1];
+  }
+  var recent = [];
+  function nextQ(active, stats) {
+    var objs = active && active.length ? active : Object.keys(OBJ);
+    var o = wpick(objs.map(function (k) {
+      var s = stats && stats[k], miss = s && s.n >= 3 ? (s.n - s.c) / s.n : 0.25;
+      return [BASE[k] * (1 + 1.5 * miss), k];
+    }));
+    var q;
+    for (var t = 0; t < 14; t++) { q = wpick(GENS[o])(); if (recent.indexOf(q.sig) < 0) break; }
+    recent.push(q.sig); if (recent.length > 120) recent.shift();
+    return q;
+  }
+  root.L104 = { nextQ: nextQ, OBJ: OBJ, fmt: fmt, GENS: GENS, CONCEPTS: CONCEPTS, SVG: SVG, SYM: SYM };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var L = window.L104, OBJ = L.OBJ, KEYS = Object.keys(OBJ), KEY = 'l104-trainer-v1';
+  var $ = function (s) { return document.querySelector(s); };
+  function fresh() { return { n: 0, c: 0, streak: 0, best: 0, by: {}, active: KEYS.slice(), tab: 'practice' }; }
+  function load() {
+    try { var s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.by && s.active) return s; } catch (e) {}
+    return fresh();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+  var store = load(), cur = null, answered = false, qcount = 0;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // ---------- tabs ----------
+  var TABS = ['practice', 'guide', 'homework'];
+  function showTab(id) {
+    TABS.forEach(function (t) {
+      $('#tab-' + t).setAttribute('aria-selected', String(t === id));
+      $('#' + t).hidden = t !== id;
+    });
+    store.tab = id; save();
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  }
+  TABS.forEach(function (t) { $('#tab-' + t).addEventListener('click', function () { showTab(t); }); });
+
+  // ---------- practice ----------
+  function renderChips() {
+    $('#chips').innerHTML = KEYS.map(function (o) {
+      var s = store.by[o] || { n: 0, c: 0 }, pct = s.n ? Math.round(100 * s.c / s.n) : null, on = store.active.indexOf(o) >= 0;
+      return '<button class="chip" type="button" data-o="' + o + '" aria-pressed="' + on + '"><b>' + OBJ[o].code + '</b><span class="nm">' + OBJ[o].name +
+        '</span><span class="meter" aria-hidden="true"><i style="width:' + (pct || 0) + '%"></i></span><small>' + (pct === null ? 'not tried yet' : pct + '% right of ' + s.n) + '</small></button>';
+    }).join('');
+  }
+  $('#chips').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    var o = b.getAttribute('data-o'), i = store.active.indexOf(o);
+    if (i >= 0) { if (store.active.length === 1) return; store.active.splice(i, 1); } else store.active.push(o);
+    save(); renderChips();
+    if (!answered && cur && store.active.indexOf(cur.obj) < 0) next();
+  });
+  var resetArmed = false, resetTimer = null;
+  function renderStats() {
+    var acc = store.n ? Math.round(100 * store.c / store.n) + '%' : '—';
+    $('#stats').innerHTML = '<span><b>' + store.n + '</b> answered</span><span><b>' + store.c + '</b> right</span><span><b>' + acc + '</b> accuracy</span><span>streak <b>' + store.streak + '</b> · best <b>' + store.best + '</b></span>' +
+      '<button class="linkbtn" id="reset" type="button">' + (resetArmed ? 'Tap again to reset' : 'Reset score') + '</button>';
+  }
+  $('#stats').addEventListener('click', function (e) {
+    if (!e.target.closest('#reset')) return;
+    if (!resetArmed) { resetArmed = true; renderStats(); clearTimeout(resetTimer); resetTimer = setTimeout(function () { resetArmed = false; renderStats(); }, 3500); return; }
+    resetArmed = false; var keep = store.active, tab = store.tab; store = fresh(); store.active = keep; store.tab = tab; save(); renderStats(); renderChips();
+  });
+
+  function render(q) {
+    cur = q; answered = false; qcount++;
+    var h = '<div class="qhead"><span class="obj">' + OBJ[q.obj].code + '</span><span>' + esc(q.topic) + '</span><span class="qno">Q' + qcount + '</span></div>';
+    h += '<p class="stem">' + q.stem + '</p>';
+    if (q.fig) h += '<div class="fig">' + q.fig + '</div>';
+    if (q.plate) h += '<div class="plate"><div class="plate-label">Nameplate</div><div class="plate-name">' + esc(q.plate.name) + '</div><div class="plate-rate">' + q.plate.rate.map(function (r) { return '<span>' + esc(r) + '</span>'; }).join('') + '</div></div>';
+    if (q.given) h += '<div class="readings">' + q.given.map(function (g) { return '<div class="lcd"><span class="lcd-k">' + esc(g[0]) + '</span><span class="lcd-v">' + esc(g[1]) + '</span></div>'; }).join('') + '</div>';
+    h += '<ol class="choices">' + q.choices.map(function (c, i) {
+      return '<li><button class="choice" type="button" data-i="' + i + '"' + (c.html ? ' aria-label="Symbol choice ' + 'abcde'[i] + '"' : '') + '><span class="let">' + 'abcde'[i] + '</span><span class="ctext">' + (c.html ? c.html : esc(c.text)) + '</span></button></li>';
+    }).join('') + '</ol><div class="feedback" id="fb" hidden></div>';
+    h += '<div style="margin-top:12px"><button class="linkbtn" id="skip" type="button">Skip this one</button></div>';
+    $('#card').innerHTML = h;
+  }
+  function choose(i) {
+    if (answered || !cur || !cur.choices[i]) return;
+    answered = true;
+    var right = cur.choices.findIndex(function (c) { return c.ok; }), ok = i === right, picked = cur.choices[i];
+    var btns = document.querySelectorAll('#card .choice');
+    btns.forEach(function (b, k) { b.disabled = true; if (k === right) b.classList.add('is-right'); if (k === i && !ok) b.classList.add('is-wrong'); });
+    var by = store.by[cur.obj] || (store.by[cur.obj] = { n: 0, c: 0 });
+    store.n++; by.n++;
+    if (ok) { store.c++; by.c++; store.streak++; if (store.streak > store.best) store.best = store.streak; } else store.streak = 0;
+    save(); renderStats(); renderChips();
+    var L8 = 'abcde', fb = $('#fb'), skip = $('#skip');
+    if (skip) skip.parentNode.remove();
+    var ansTxt = cur.choices[right].html ? 'the symbol in choice ' + L8[right] : '“' + esc(cur.choices[right].text) + '”';
+    var h = ok ? '<p class="verdict ok">Correct.</p>' : '<p class="verdict bad">Not this time. The answer is ' + L8[right] + '.</p><p style="margin:6px 0 0">' + ansTxt.charAt(0).toUpperCase() + ansTxt.slice(1) + '</p>';
+    if (!ok && picked.why) h += '<p class="why"><b>Why ' + L8[i] + ' is off:</b> ' + esc(picked.why) + '</p>';
+    else if (!ok && !picked.html && !/True|False/.test(picked.text) && /\d/.test(picked.text)) h += '<p class="why"><b>Why ' + L8[i] + ' is off:</b> that number doesn’t come from the right formula. Follow the steps below.</p>';
+    h += '<p class="label">How to solve it</p><ol class="steps">' + cur.steps.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ol>';
+    h += '<p class="cite"><b>Your book:</b> ' + esc(cur.cite) + '</p><button class="btn" id="next" type="button">Next question →</button>';
+    fb.innerHTML = h; fb.hidden = false;
+    var nb = $('#next'); nb.focus({ preventScroll: true });
+    try { fb.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }); } catch (e) {}
+  }
+  function next() {
+    render(L.nextQ(store.active, store.by));
+    var card = $('#card'), r = card.getBoundingClientRect();
+    if (r.top < 0) try { card.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' }); } catch (e) {}
+  }
+  $('#card').addEventListener('click', function (e) {
+    var c = e.target.closest('.choice'); if (c) { choose(+c.getAttribute('data-i')); return; }
+    if (e.target.closest('#next') || e.target.closest('#skip')) next();
+  });
+  document.addEventListener('keydown', function (e) {
+    if ($('#practice').hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key.toLowerCase(), idx = '12345'.indexOf(k);
+    if (idx < 0) idx = 'abcde'.indexOf(k);
+    if (!answered && idx >= 0 && k.length === 1) { e.preventDefault(); choose(idx); return; }
+    if (answered && (k === 'enter' || k === 'n') && !(e.target && e.target.closest && e.target.closest('button'))) { e.preventDefault(); next(); }
+  });
+
+  // ---------- symbol table in the guide ----------
+  var symRows = [['battery', 'Battery. Two lines, and the shorter one is negative.', 'p. 104-5, Fig. 104-7'], ['winding', 'Transformer or generator winding (coil)', 'Fig. 104-15'], ['breaker', 'Circuit breaker', 'Fig. 104-16'], ['fuseBox', 'Fuse (box style)', 'Fig. 104-16'], ['fuseS', 'Fuse (S-curve style)', 'Fig. 104-16'], ['resistor', 'Resistance or resistive load (lamp, heating element)', 'Figs. 104-19, 104-20, 104-27']];
+  $('#symtable tbody').innerHTML = symRows.map(function (r) { return '<tr><td><span style="display:block;width:110px;color:var(--ink)">' + L.SVG[r[0]].replace('<svg ', '<svg width="110" height="44" ') + '</span></td><td>' + r[1] + '</td><td class="pg">' + r[2] + '</td></tr>'; }).join('');
+
+  // ---------- homework ----------
+  var HW = [
+    { t: '104 Reading Worksheet', p: '104-WB1', items: [
+      [1, 'When smaller diameter wire is used for a circuit, the total circuit resistance ___.', '', 'b. increases', 'blank', 'p. 104-5: “The bigger the pipe, the more water will flow. The same is true for electron flow.” A smaller wire is a smaller pipe, so less flow and more resistance. The full resistance section starts on p. 104-9 (not sent yet).'],
+      [2, 'Fixed resistance is determined from nameplate information and ___, regardless of applied operating voltage.', '', 'a. does not change', 'blank', 'p. 104-18: “…this resistance doesn’t change, regardless of applied or operating voltage.”'],
+      [3, 'All matter is composed of ___.', '', 'c. molecules', 'blank', 'p. 104-2: “All matter is composed of molecules.”'],
+      [4, 'Voltage applied to equipment should not exceed the manufacturer’s rating.', '', 'a. True', 'blank', 'p. 104-20: “Note that voltage applied to equipment should not exceed the manufacturer’s rating.”'],
+      [5, '___ is always expressed in amperes.', '', 'b. Current', 'blank', 'p. 104-16: “Current is always expressed in amperes.”'],
+      [6, '___ is the total opposition to current flow in a circuit.', '', 'a. Resistance', 'blank', 'Defined in the resistance section on p. 104-9 (only its edge shows in your photo of p. 104-8). Support: p. 104-13 says an open breaker has “infinite resistance” and “does not allow current to flow.”'],
+      [7, 'A material that consists of molecules that allow many electrons to move freely is called ___.', '', 'c. a conductor', 'blank', 'p. 104-6, word for word: “…is called a conductor.”'],
+      [8, 'When applied to electricity, a ___ is a unit of energy.', '', 'b. joule', 'blank', 'p. 104-4, word for word: “When applied to electricity, a joule (J) is a unit of energy.” A kWh is also energy, but the question copies the joule sentence.'],
+      [9, '___ shows the relationship between current, voltage, and resistance.', '', 'd. Ohm’s Law', 'blank', 'p. 104-16: “This is the law of relationships between current (I), voltage (E), and resistance (R).”'],
+      [10, '___ is the flow of electrons from one atom to another.', '', 'd. Current', 'blank', 'p. 104-3, word for word: “Current is the flow of electrons from one atom to another.”']
+    ] },
+    { t: 'Objective 104.1 Worksheet', p: '104-WB3', items: [
+      [1, 'Two particles that are both positively charged will ___ each other.', 'b', 'b. repel', 'ok', 'p. 104-3: “…particles that have the same charge repel each other.”'],
+      [2, 'Which of these symbols is used to represent a battery?', 'a (circled)', 'a. the +|| symbol', 'ok', 'p. 104-5: “The terminals of the battery are represented by two lines, with the shorter line representing the negative terminal” (Fig. 104-7). Your circle is on a, but the letter in your blank looks like a “d” (the resistor). Make the blank clearly match your circle.'],
+      [3, '___ is the force that causes current to flow.', 'c', 'c. Voltage', 'ok', 'p. 104-5: “The force required to cause electrons to flow… is called electromotive force or emf… Voltage is the most common term used to describe this force.”'],
+      [4, '___ flow equals current flow.', '', 'a. Electron', 'blank', 'p. 104-4: “This electron flow is current flow.” Also p. 104-3: “This flow of electrons is termed “current flow.””'],
+      [5, 'AC is an abbreviation for ___.', 'd', 'd. Alternating Current', 'ok', 'p. 104-8: “…termed AC for alternating current.”'],
+      [6, 'Which materials are good conductors? I. Copper II. Air III. Gold', 'c', 'c. I & III only', 'ok', 'p. 104-6 lists copper and gold as excellent conductors and air as a good insulator.']
+    ] },
+    { t: 'Objective 104.2 Worksheet', p: '104-WB4', items: [
+      [1, 'Which is a resistive load? I. A coffee maker II. An electric oven heating element', 'c', 'c. Both I & II', 'ok', 'Heating elements are drawn as resistance in Figs. 104-19 and 104-20, and p. 104-14 calls the water heater’s element “the resistive element.” The definition is on pp. 104-9 to 104-12 (not sent yet).'],
+      [2, 'Which circuit has a higher resistance during the summer?', 'b', 'b. Circuit #1 in conduit on the roof', 'ok', 'Heat raises resistance, and a roof is hotter than underground. This is in the resistance section, p. 104-9 to 104-12 (not sent yet).'],
+      [3, 'You run 8 AWG (.128") instead of 10 AWG (.116"). You have ___ the total circuit resistance.', 'c', 'c. decreased', 'ok', 'p. 104-5: a bigger pipe means more flow. Bigger wire means less resistance.'],
+      [4, 'The abbreviation or symbol used to represent resistance in a formula is ___.', 'b (Ω)', 'e. R', 'bad', 'p. 104-16: the formulas are I = E ÷ R, E = I × R and R = E ÷ I, and Fig. 104-21 labels “R = RESISTANCE (IN Ω).” R is the letter used in a formula. Ω is the unit (ohms). It’s the same pattern as “E or V represents voltage in a calculation or formula” (p. 104-5).'],
+      [5, '1,200 ohms and .1 ampere: what is the applied voltage?', 'a', 'a. 120', 'ok', 'p. 104-16: E = I × R = .1 × 1,200 = 120 V.'],
+      [6, 'Two 2.2 kW @ 240 V loads on the same circuit: total current is ___ that of one load.', 'b', 'b. double', 'ok', 'Fig. 104-25: I = P ÷ E = 2,200 ÷ 240 = 9.1667 A each, so 18.3333 A for two. Tip: keep four decimals (p. 104-20). You wrote 9.17.'],
+      [7, 'Clean, dry air has a resistance of ___ ohms.', 'a', 'a. ∞', 'ok', 'p. 104-6 lists air as an insulator, and p. 104-13 says the air space in an open breaker has “infinite resistance.”'],
+      [8, 'When turned ON, a circuit breaker ___ the circuit.', 'b', 'b. closes', 'ok', 'p. 104-13: “Circuit breakers are switches that are either off (open) or on (closed).”'],
+      [9, 'Which 250′ circuit has the lesser resistance?', 'b', 'b. Circuit #2: 10 AWG', 'ok', '10 AWG is the bigger wire (smaller number = bigger, see #3), and p. 104-5 says a bigger pipe means more flow.'],
+      [10, 'Car battery, conductors and headlamp: if the filament breaks in two, the circuit is ___.', 'a', 'a. incomplete or open', 'ok', 'p. 104-13: “Any break in the track (or circuit) stops the flow of cars (or current).”']
+    ] },
+    { t: 'Objective 104.3 Worksheet', p: '104-WB6 and WB7', items: [
+      [1, 'A load is rated 2.2 kW at 240 V on 12 AWG conductors. How much current?', '', 'c. 9.2', 'blank', 'Fig. 104-25: I = P ÷ E = 2,200 ÷ 240 = 9.1667 A, which rounds to 9.2. The 12 AWG detail doesn’t change the math. You set this up right at the top of the page, so just finish the division.'],
+      [2, '.4 kW of power and 40 ohms. What is the current?', 'c (10 amps)', 'd. 3.16 amps', 'bad', 'Fig. 104-25: I = √(P ÷ R) = √(400 ÷ 40) = √10 = 3.1623 A. You did 400 ÷ 40 = 10, but that is I², not I. Take the square root.'],
+      [3, '480 volts and 12 amperes. What is the resistance?', 'a (circled)', 'a. 40', 'ok', 'p. 104-16: R = E ÷ I = 480 ÷ 12 = 40 Ω. Your blank letter looks like a “d,” so write the “a” clearly.'],
+      [4, '4.5 kW plate warmer at 240 V. How many amps?', 'c', 'c. 18.75', 'ok', 'Fig. 104-25: I = P ÷ E = 4,500 ÷ 240 = 18.75 A.'],
+      [5, '400 ohms with 100 volts applied. What is the current?', 'b', 'b. .25', 'ok', 'p. 104-16: I = E ÷ R = 100 ÷ 400 = .25 A.'],
+      [6, '1,200 ohms and .1 ampere. What is the applied voltage?', 'd', 'd. 120', 'ok', 'p. 104-16: E = I × R = .1 × 1,200 = 120 V.'],
+      [7, '480 volts pulling 45 amps. What is the power?', 'a (circled)', 'a. 21.6 kW', 'ok', 'p. 104-17: P = I × E = 45 × 480 = 21,600 W = 21.6 kW.'],
+      [8, '7¼" circular saw, 10 amps and 120 volts. What is the resistance?', 'a', 'a. 12', 'ok', 'p. 104-16: R = E ÷ I = 120 ÷ 10 = 12 Ω.'],
+      [9, 'Incandescent lamp, 100 watts and 277 volts. What is the resistance?', '', 'c. 767.290', 'blank', 'Fig. 104-25: R = E² ÷ P = 277² ÷ 100 = 76,729 ÷ 100 = 767.29 Ω. The book uses this same formula on p. 104-19. You started 100 ÷ 277, but that’s P ÷ E, which is the current (.361 A).'],
+      [10, 'Drill, 5.4 amps and 120 volts. What is the resistance?', 'c', 'c. 22.2222', 'ok', 'R = E ÷ I = 120 ÷ 5.4 = 22.2222 Ω.'],
+      [11, 'Garage door opener, 3.8 amps and 115 volts. What is the resistance?', 'a', 'a. 30.2632', 'ok', 'R = E ÷ I = 115 ÷ 3.8 = 30.2632 Ω.'],
+      [12, '400 ohms with 100 volts applied. What is the current?', 'b', 'b. .25', 'ok', 'I = E ÷ R = 100 ÷ 400 = .25 A.'],
+      [13, '9,500 W range rated 240 V. What current at 240 V?', 'a', 'a. 40 amperes', 'ok', 'I = P ÷ E = 9,500 ÷ 240 = 39.5833 A, and the closest choice is 40.']
+    ] },
+    { t: 'Objective 104.4 Worksheet', p: '104-WB9', items: [
+      [1, 'Hair dryer 1750 W, 120 V, operated at 110 V. What is the current?', 'e', 'e. 13.367', 'ok', 'p. 104-19, find R first: R = 120² ÷ 1,750 = 8.2286 Ω, then I = 110 ÷ 8.2286 = 13.368 A (the book rounds to 13.367). Your margin math 1,750 ÷ 120 = 14.5833 is the rated current (choice d), which is only true at 120 V.'],
+      [2, 'Lamp 100 W @ 130 V, operated at 110 V. What power?', 'e', 'e. 71.6', 'ok', 'R = 130² ÷ 100 = 169 Ω, then P = 110² ÷ 169 = 71.5976 W.'],
+      [3, 'I = E ÷ R: current is directly proportional to voltage and ___ proportional to resistance.', 'c', 'c. inversely', 'ok', 'p. 104-19: “Current is also inversely proportional to resistance (when voltage remains constant).”'],
+      [4, 'Water heater 5 kW @ 230 V, supply drops to 215 V. Watts delivered?', 'c', 'c. 4,369', 'ok', 'R = 230² ÷ 5,000 = 10.58 Ω, then P = 215² ÷ 10.58 = 4,369.09 W.'],
+      [5, 'Hair dryer 1750 W @ 120 V operated at 110 V. What power?', '', 'e. 1,470.486', 'blank', 'p. 104-19: R = 120² ÷ 1,750 = 8.228571 Ω, then P = 110² ÷ 8.228571 = 12,100 ÷ 8.228571 = 1,470.486 W.'],
+      [6, 'Lamp 60 W @ 130 V operated at 110 V. What power?', '', 'c. 43', 'blank', 'R = 130² ÷ 60 = 281.6667 Ω, then P = 110² ÷ 281.6667 = 42.9586 W, about 43.'],
+      [7, 'Blender 350 W @ 120 V operated at 110 V. What current?', '', 'a. 2.6736', 'blank', 'R = 120² ÷ 350 = 41.1429 Ω, then I = 110 ÷ 41.1429 = 2.6736 A.'],
+      [8, 'Garage door opener 13.8 A @ 115 V operated at 130 V. What current?', '', 'b. 15.6', 'blank', 'R = 115 ÷ 13.8 = 8.3333 Ω, then I = 130 ÷ 8.3333 = 15.6 A. Watch out: d (8.3333) is the resistance, not the current.'],
+      [9, 'If the voltage is lowered in a simple circuit, what will the current do?', 'c (marked)', 'b. Go down', 'bad', 'p. 104-18: “…if the voltage is increased (or decreased), the current will increase (or decrease) proportionally.” Your blank is empty and there is a mark on c (Go up). The answer is b.']
+    ] },
+    { t: '104 Safety Worksheet', p: '104-WB11', items: [
+      [1, 'Ideally, when backing, you should use a ___.', 'b', 'b. spotter', 'ok', 'p. 104-21: “Whenever possible, use a spotter.”'],
+      [2, 'A trailer parked at a dock should have its wheels chocked.', 'a', 'a. True', 'ok', 'p. 104-21: “If you leave your trailer at the dock, be sure to chock its wheels.”'],
+      [3, 'Before backing up a vehicle, a driver should ___.', 'b', 'b. walk around and scope out the area', 'ok', 'p. 104-21: “Walk around the area where you plan to park your rig and scope out the situation before you start.”'],
+      [4, 'It is best to have a spotter on hand when backing a truck.', 'a', 'a. True', 'ok', 'p. 104-21: “It’s best to have a spotter outside the truck.”']
+    ] }
+  ];
+  var LABEL = { ok: 'Correct', bad: 'Fix', blank: 'Was blank' };
+  var cnt = { ok: 0, bad: 0, blank: 0 };
+  HW.forEach(function (w) { w.items.forEach(function (it) { cnt[it[4]]++; }); });
+  $('#hwsum').innerHTML = '<div class="tile ok"><b>' + cnt.ok + '</b><span>you got right</span></div><div class="tile bad"><b>' + cnt.bad + '</b><span>to fix</span></div><div class="tile blank"><b>' + cnt.blank + '</b><span>were blank, answers below</span></div>';
+  var fixes = [];
+  HW.forEach(function (w) { w.items.forEach(function (it) { if (it[4] === 'bad') fixes.push('<li><b>' + w.t.replace(' Worksheet', '') + ' #' + it[0] + ':</b> you put ' + esc(it[2]) + '. The answer is <b>' + esc(it[3]) + '</b>.</li>'); }); });
+  $('#hwfix').innerHTML = '<h3 style="margin:22px 0 0;font-size:17px">Fix these first</h3><ol class="fixlist">' + fixes.join('') + '</ol>' +
+    '<p class="note" style="margin-top:14px"><b>Handwriting:</b> on a few questions (104.1 #2, 104.3 #3 and #7, Safety #2) your circled answer is <b>a</b>, but the letter in the blank looks like a <b>d</b>. A grader may go by the blank, so make your a’s round.</p>';
+  $('#hwlist').innerHTML = HW.map(function (w) {
+    return '<div class="ws"><h3>' + w.t + '</h3><p class="wsp">' + w.p + '</p>' + w.items.map(function (it) {
+      return '<div class="hw-row"><span class="hw-n">' + it[0] + '</span><div><p class="hw-q">' + esc(it[1]) + '</p><div class="hw-meta"><span>Yours: <b>' + (it[2] ? esc(it[2]) : 'blank') + '</b></span><span>Answer: <b>' + esc(it[3]) + '</b></span></div><div class="hw-cite">' + esc(it[5]) + '</div></div><span class="pill ' + it[4] + '">' + LABEL[it[4]] + '</span></div>';
+    }).join('') + '</div>';
+  }).join('');
+
+  // ---------- boot ----------
+  var h = (location.hash || '').slice(1);
+  showTab(TABS.indexOf(h) >= 0 ? h : (TABS.indexOf(store.tab) >= 0 ? store.tab : 'practice'));
+  renderChips(); renderStats(); render(L.nextQ(store.active, store.by));
+})();
+</script>
