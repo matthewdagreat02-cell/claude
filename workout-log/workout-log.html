@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Workout Log</title>
+<style>
+@page { size: letter landscape; margin: 0.4in; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Helvetica Neue", Arial, sans-serif; color: #111; width: 10.2in; height: 7.7in; display: flex; flex-direction: column; }
+.top { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #111; padding-bottom: 5px; }
+h1 { font-size: 18pt; letter-spacing: 3px; font-weight: 800; }
+h1 span { display: inline-block; width: 16px; height: 16px; border: 3px solid #111; margin-right: 8px; vertical-align: -1px; }
+.wk { font-size: 7pt; font-weight: 700; letter-spacing: 1px; color: #555; }
+.days { display: flex; flex-direction: column; gap: 0.18in; flex: 1; margin-top: 8px; }
+.day { flex: 1; display: flex; flex-direction: column; }
+.dayhead { font-size: 9pt; font-weight: 800; letter-spacing: 2px; width: 0.75in; align-self: flex-end; }
+.fields { display: flex; gap: 10px; margin-bottom: 5px; }
+.f { flex: 1; font-size: 6pt; font-weight: 700; letter-spacing: 1px; color: #555; }
+.f div { border-bottom: 1px solid #111; height: 16px; }
+.f.wide { flex: 2; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th { background: #1a1a1a; color: #fff; font-size: 6pt; letter-spacing: 1px; font-weight: 700; padding: 3px 4px; text-align: center; }
+th.l { text-align: left; }
+td { border: 1px solid #111; height: 0.27in; }
+td.n { border-right: 1.5px solid #111; }
+td.w { border-right: 1.5px solid #111; }
+.notes { margin-top: 4px; border: 1.5px solid #111; flex: 1; min-height: 0.25in; padding: 2px 6px; font-size: 6pt; font-weight: 700; letter-spacing: 1px; color: #555; }
+</style></head><body>
+<div class="top"><h1><span></span>WORKOUT LOG</h1></div>
+<div class="days" id="days"></div>
+<script>
+const ROWS = 9, SETS = 10;
+let out = '';
+for (let d = 1; d <= 2; d++) {
+  let rows = '';
+  for (let r = 0; r < ROWS; r++) rows += `<tr><td class="n"></td><td class="w"></td>${'<td></td>'.repeat(SETS)}</tr>`;
+  let sets = '';
+  for (let s = 1; s <= SETS; s++) sets += `<th>SET ${s}<br>REPS</th>`;
+  out += `<div class="day">
+    <div class="fields"><div class="dayhead">DAY ${String(d).padStart(2,'0')}</div><div class="f">DATE<div></div></div><div class="f">START<div></div></div><div class="f">END<div></div></div><div class="f wide">FOCUS / MUSCLE GROUP<div></div></div></div>
+    <table><colgroup><col style="width:22%"><col style="width:8%">${'<col>'.repeat(SETS)}</colgroup>
+      <tr><th class="l">WORKOUT NAME</th><th>WEIGHT</th>${sets}</tr>${rows}</table>
+    <div class="notes">NOTES</div></div>`;
+}
+document.getElementById('days').innerHTML = out;
+</script>
+</body></html>
