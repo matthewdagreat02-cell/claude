@@ -4,7 +4,8 @@
 --   right:  Vehicles (red), Home (orange)
 --   bottom-left:  cash ($150, or ∞ for developers) + Friend Boost and invite button
 --   bottom-right: tornado timer
---   panels: Shop / Garage, Survivor Index, Share Your Feedback (+ developer reader)
+--   right, under Home: Filters (🎨 screen filters, see WildWestShared.Filters)
+--   panels: Shop / Garage, Survivor Index, Filters, Share Your Feedback (+ developer reader)
 --   pop-ups: +$ cash, notifications, passengers counter
 
 local Players = game:GetService("Players")
@@ -614,6 +615,127 @@ indexButton.MouseButton1Click:Connect(function()
 	end
 	refreshBadge()
 	showPanel(indexPanel)
+end)
+
+---------------------------------------------------------------------------
+-- Screen filters (🎨 button under Home). Only changes your own screen.
+---------------------------------------------------------------------------
+local Filters = require(ReplicatedStorage.WildWestShared:WaitForChild("Filters"))
+local FilterController = require(script.Parent:WaitForChild("FilterController"))
+
+local filtersButton = chunkyButton(gui, {
+	Name = "FiltersButton",
+	Color = Color3.fromRGB(160, 80, 235),
+	Icon = "🎨",
+	Caption = "Filters",
+	Size = UDim2.fromOffset(92, 92),
+	Position = UDim2.new(1, -14, 0.4, 158),
+	AnchorPoint = Vector2.new(1, 0.5),
+})
+
+local filtersPanel, filtersList = makePanel("Filters", Color3.fromRGB(160, 80, 235))
+new("UIListLayout", { Parent = filtersList, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder })
+local SELECTED = Color3.fromRGB(255, 220, 40)
+
+-- Strength row
+local strengthRow = new("Frame", {
+	Parent = filtersList,
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, -10, 0, 54),
+	LayoutOrder = 0,
+})
+cartoonText(strengthRow, { Text = "Strength", Size = UDim2.fromOffset(130, 40), Position = UDim2.fromOffset(0, 7), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 })
+local strengthButtons = {}
+for i, pct in { 25, 50, 75, 100 } do
+	local b = chunkyButton(strengthRow, {
+		Name = "Strength" .. pct,
+		Color = Color3.fromRGB(28, 186, 240),
+		Text = pct .. "%",
+		Size = UDim2.fromOffset(96, 48),
+		Position = UDim2.fromOffset(140 + (i - 1) * 104, 3),
+	})
+	b.MouseButton1Click:Connect(function()
+		FilterController.apply(FilterController.getId(), pct / 100)
+	end)
+	strengthButtons[pct] = b
+end
+
+-- One section per category, cards in a grid
+local filterCards = {}
+for order, category in Filters.Categories do
+	cartoonText(filtersList, {
+		Text = category,
+		Size = UDim2.new(1, -10, 0, 34),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		LayoutOrder = order * 2 - 1,
+		ZIndex = 12,
+	})
+	local grid = new("Frame", {
+		Parent = filtersList,
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, -10, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = order * 2,
+	}, {
+		new("UIGridLayout", {
+			CellSize = UDim2.fromOffset(128, 92),
+			CellPadding = UDim2.fromOffset(8, 8),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+		}),
+	})
+	for i, f in Filters.List do
+		if f.Category == category then
+			local card = new("TextButton", {
+				Parent = grid,
+				Name = f.Id,
+				AutoButtonColor = false,
+				Text = "",
+				BackgroundColor3 = f.Color or Color3.fromRGB(200, 200, 200),
+				LayoutOrder = i,
+				ZIndex = 12,
+			}, {
+				corner(12),
+				border(3.5),
+				new("UIGradient", {
+					Color = ColorSequence.new(WHITE, Color3.fromRGB(190, 190, 190)),
+					Rotation = 90,
+				}),
+			})
+			cartoonText(card, { Text = f.Icon, Size = UDim2.new(1, 0, 0.55, 0), Position = UDim2.fromScale(0, 0.05), StrokeThickness = 0, ZIndex = 13 })
+			cartoonText(card, { Text = f.Name, Size = UDim2.new(0.92, 0, 0.3, 0), Position = UDim2.fromScale(0.04, 0.63), StrokeThickness = 2.5, ZIndex = 13 })
+			pop(card)
+			card.MouseButton1Click:Connect(function()
+				FilterController.apply(f.Id)
+			end)
+			filterCards[f.Id] = card
+		end
+	end
+end
+
+local function refreshFilterSelection(id, strength)
+	for fid, card in filterCards do
+		local stroke = card:FindFirstChildOfClass("UIStroke")
+		stroke.Color = fid == id and SELECTED or BLACK
+		stroke.Thickness = fid == id and 6 or 3.5
+	end
+	local pct = math.floor(strength * 100 + 0.5)
+	for p, b in strengthButtons do
+		local stroke = b:FindFirstChildOfClass("UIStroke")
+		stroke.Color = p == pct and SELECTED or BLACK
+		stroke.Thickness = p == pct and 6 or 3.5
+	end
+end
+FilterController.Changed:Connect(function(id, strength)
+	refreshFilterSelection(id, strength)
+	local f = Filters.ById[id]
+	if f and filtersPanel.Visible then
+		notify(f.Icon .. " " .. f.Name .. " filter", WHITE)
+	end
+end)
+FilterController.apply(Filters.DefaultId, 1)
+
+filtersButton.MouseButton1Click:Connect(function()
+	showPanel(filtersPanel)
 end)
 
 ---------------------------------------------------------------------------
