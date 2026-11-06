@@ -30,6 +30,7 @@ brown = dirt roads, grey = railroad, green = the 6 player plots.*
 | Feedback mailbox at every plot: step in the orange ring or press E. Dark "Share Your Feedback" window. Developers get a "Read Feedback (dev)" button | `FeedbackService`, `UI` |
 | 2 **global** leaderboards beside the plots: Top Earners All Time (left) and This Week (right) | `LeaderboardService` |
 | Cartoon HUD in the style of the reference: Shop, Index, Vehicles, Home, cash, Friend Boost, tornado timer | `UI` |
+| **🎨 Screen filters** (button under Home): 32 filters in 5 sections (Color, Mood, Time of Day, Weather, Camera) plus a 25/50/75/100% strength picker. Built from every Roblox post-processing type: ColorCorrection, Bloom, Blur, SunRays, DepthOfField, ColorGrading (tone mapping), Atmosphere and Lighting. Only changes your own screen, fades in and out, and puts the game's own lighting back when switched off | `Filters`, `FilterController`, `UI` |
 
 ## Where each script goes
 
@@ -39,7 +40,8 @@ Create these in Roblox Studio **with exactly these names and types**
 ```
 ReplicatedStorage
 └── WildWestShared            (Folder)
-    └── Config                (ModuleScript)   ← src/shared/Config.lua
+    ├── Config                (ModuleScript)   ← src/shared/Config.lua
+    └── Filters               (ModuleScript)   ← src/shared/Filters.lua
 
 ServerScriptService
 └── WildWest                  (Folder)
@@ -60,6 +62,7 @@ ServerScriptService
 StarterPlayer
 └── StarterPlayerScripts
     └── WildWestClient        (Folder)
+        ├── FilterController  (ModuleScript)   ← src/client/FilterController.lua
         ├── UI                (LocalScript)    ← src/client/UI.client.lua
         └── VehicleDrive      (LocalScript)    ← src/client/VehicleDrive.client.lua
 ```
@@ -95,6 +98,9 @@ leaderboard size, feedback limits.
 
 - Vehicle drives backwards on W → set `Config.InvertDrive = true`.
 - Different town layout → change `Config.Town.Seed`.
+- Add or change a screen filter → edit `Filters.List` in `WildWestShared.Filters`
+  (each entry lists which effects it uses; copy one and give it a new `Id`).
+  `Filters.DefaultId` is the filter a player starts with.
 - Your old starter had a different speed → set `Config.StarterBaseSpeed`
   to that value; 1.5× is applied automatically.
 
